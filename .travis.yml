@@ -1,3 +1,4 @@
 before_install:
   - sudo apt-get install texlive-xetex latex-cjk-all
-script: make
+script: cd guide-book
+        make
