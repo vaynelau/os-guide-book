@@ -1,5 +1,4 @@
 before_install:
-  - sudo apt-get install texlive-xetex latex-cjk-all
   - sudo apt-get install texlive-full
   - sudo mv ./guide-book/fonts/AdobeFangsongStd-Regular.otf /usr/share/font/
   - sudo mv ./guide-book/fonts/AdobeHeitiStd-Regular (v5.010).otf /usr/share/font/
@@ -8,4 +7,3 @@ before_install:
   - sudo fc-cache -fv
 script: 
   - cd guide-book
-  - make
