@@ -2,7 +2,7 @@ sudo: required
 dist: trusty
 
 before_install:
-  - sudo apt-get install texlive-full
+  - sudo apt-get -y install texlive-full
   - sudo mkdir -p /usr/share/font/
   - sudo mv ./guide-book/fonts/AdobeFangsongStd-Regular.otf /usr/share/font/
   - sudo mv ./guide-book/fonts/AdobeHeitiStd-Regular\ \(v5.010\).otf /usr/share/font/
