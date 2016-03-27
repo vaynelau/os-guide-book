@@ -6,3 +6,4 @@
 - [oncebasun](https://github.com/oncebasun/BUAA_MIPS_OS_DOC)
 - [YoungForest](https://github.com/YoungForest/BUAA_MIPS_OS_DOC)
 - [tangjz](https://github.com/tangjz/BUAA_MIPS_OS_DOC)
+- [BokiceLee](https://github.com/BokiceLee/BUAA_MIPS_OS_DOC)
