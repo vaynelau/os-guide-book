@@ -11,6 +11,7 @@ before_install:
   - sudo mkfontscale
   - sudo mkfontdir
   - sudo fc-cache -fv
+  - sudo apt-get install python-pygments
 script:
   - cd guide-book
   - make
