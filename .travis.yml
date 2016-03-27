@@ -12,6 +12,7 @@ before_install:
 - sudo mkfontscale
 - sudo mkfontdir
 - sudo fc-cache -fv
+- fc-list :lang=zh
 script:
 - cd guide-book
 - make
