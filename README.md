@@ -46,16 +46,20 @@ You can use `xelatex -shell-escape -8bit guide-book.tex` twice in directory `gui
 
 If you find any *bug* or *wrong*, welcome to contribute to make the book better.
 
-- If you are not familiar with *latex* and *github*, you can also open an [issue](https://github.com/SivilTaram/BUAAOS-guide-book/issues). Just click the button `New issue` to notice us.
+### Not Familiar with latex
+If you are not familiar with *latex* and *github*, you can also open an [issue](https://github.com/SivilTaram/BUAAOS-guide-book/issues). Just click the button `New issue` to notice us.
 
-- If you are familiar with *latex* and *github*, welcome to fork and pull request. Please guarantee the PR pass the auto-build in [Travis-CI](https://travis-ci.org/SivilTaram/BUAAOS-guide-book/builds).
+### Familiar with latex
 
-	- If you just want to commit something but it may bring failure, you can commit as follow:
+If you are familiar with *latex* and *github*, welcome to fork and pull request. Please guarantee the PR pass the auto-build in [Travis-CI](https://travis-ci.org/SivilTaram/BUAAOS-guide-book/builds).
+
+- If you just want to commit something but it may bring failure, you can commit as follow:
+
 ```shell
 git commit -m "[ci skip] xxxx"
 ```
 
-	- If your commits can make auto-build success, you can push as follow:
+- If your commits can make auto-build success, you can push as follow:
 
 ```shell
 git tag -a v1.1.1 -m "tags content"
