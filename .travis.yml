@@ -24,6 +24,10 @@ before_install:
 script:
 - cd guide-book
 - make
+- cd ..
+- mv guide-book/guide-book.pdf guide-book.pdf
+- ls
+- pwd
 deploy:
   provider: releases
   api_key:
