@@ -13,20 +13,17 @@ Plan to write the guide-book.
 
 ## How to Build
 
-- Ubuntu
+### Ubuntu
 
 In `ubuntu`,you can easily build it by `.install.sh`.
 
-1.
 ```shell
 git clone https://github.com/SivilTaram/BUAAOS-guide-book.git
-```
-2.
-```shell
 cd BUAAOS-guide-book
 chmod a+x .install.sh
 ```
-3.
+And then you can run `.install.sh` to install the all environments.
+
 ```shell
 ./.install.sh
 ```
@@ -40,24 +37,32 @@ make
 
 And then you will get a `guide-book.pdf` in you directory `guide-book`.
 
-- Windows:
+### Windows
 
 You can use `xelatex -shell-escape -8bit guide-book.tex` twice in directory `guide-book`, and you can get `guide-book.pdf`。
 
-*Note: You should add `\setCJKmainfont{font-name}` to `guide-book.tex` as a result of loss of default zh-fonts in windows.*
+**Note: You should add `\setCJKmainfont{font-name}` to `guide-book.tex` as a result of loss of default zh-fonts in windows.**
 
-## How to Auto-Build and Upload
+## How to Contribute
 
-If you fork and pull request, you can push as follow:
+If you find any `bug` or `wrong`, welcome to fork and pull request. 
+
+If you just want to commit something but it may bring failure, you can commit as follow:
+
+```shell
+git commit -m "[ci skip] xxxx"
+```
+
+If your change to it can make build success, you can push as follow:
 
 ```shell
 git tag -a v1.1.1 -m "tags content"
 git push --tags
 git push
 ```
+*The `v1.1.1` is the version number of guide-book.*
 
-The `v1.1.1` is the version number of guide-book.
-
+And then you can make a pull request.
 
 ## Index Tree
 
