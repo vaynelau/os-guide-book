@@ -19,6 +19,7 @@ before_install:
 - sudo make
 - sudo mv minted.sty /usr/share/texlive/texmf-dist/tex/latex/minted
 - sudo mv minted1.sty /usr/share/texlive/texmf-dist/tex/latex/minted
+- cd ..
 - sudo apt-get install python-pygments
 script:
 - cd guide-book
