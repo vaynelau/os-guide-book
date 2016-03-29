@@ -1,4 +1,4 @@
-# BUAA Operating System Experiment Guide Book ![Travis-CI Image](https://travis-ci.org/SivilTaram/BUAAOS-guide-book.svg?branch=master)
+# BUAA Operating System Experiment Guide Book [![Build Status](https://travis-ci.org/SivilTaram/BUAAOS-guide-book.svg?branch=master)](https://travis-ci.org/SivilTaram/BUAAOS-guide-book)
 ## ChangeLog
 
 ### 2016/3/28
