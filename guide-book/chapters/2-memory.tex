@@ -119,7 +119,7 @@ LIST_HEAD(Page_list, Page);
 static struct Page_list page_free_list; /* Free list of physical pages */
 \end{minted}
 
-\begin{thinking}\label{think-do_while}
+\begin{thinking}\label{think-Struct page}
 注意，我们定义的 Page 结构体只是一个信息的载体，它只代表了相应物理内存页的信息，它本身并不是物理内存页。
 那我们的物理内存页究竟在哪呢？Page 结构体又是通过怎样的方式找到它代表的物理内存页的地址呢？
 请你阅读 include/pmap.h 与 mm/pmap.c 中相关代码，给出你的想法。
@@ -151,6 +151,11 @@ static void *alloc(u_int n, u_int align, int clear);
 
 alloc 函数能够按照参数 align 进行对齐，然后分配 n 字节大小的物理内存，并根据参数 clear 的设定决
 定是否将新分配的内存全部清零，并最终返回新分配的内存的首地址。
+
+\begin{thinking}\label{think-bzero}
+在 init.h 中定义了\mintinline{c}|bzero(void *b, size_t)|这样一个函数,请你思考，此处的b指针是一个物理地址，
+还是一个虚拟地址呢？ 
+\end{thinking}
 
 有了分配物理内存的功能后，接下来我们需要给操作系统内核必须的数据结构 -- 页目录（pgdir）、内存控制块
 数组（pages）和进程控制块数组（envs）分配所需的物理内存。mips\_vm\_init() 函数实现了这一功能，
