@@ -61,14 +61,15 @@ TLB 是将程序使用的地址（虚拟地址）翻译成物理地址（访问�
   \item \mintinline{c}|page_init()|;
 \end{enumerate}
 
-这三个函数来实现内存管理的相关数据结构的初始化。
+这三个函数来实现内存管理的相关数据结构的初始化。为了让我们的思路更加明确，我们可以把整个内存管理
+粗略的分为物理内存管理与虚拟内存管理两部分。
 
 \section{物理内存管理}
 
 \subsection{内存控制块}
 
-在MIPS CPU 中，地址转换以4KB 大小为单位，称为页。我们使用 Page 结构体来作为记录一页内存的相关信息
-的数据结构：
+在MIPS CPU 中，地址转换以4KB 大小为单位，称为页。整个物理内存按4KB大小分成了许多页，我们大多数时候的
+内存分配，也是以页为单位来进行。为了记录分配情况，我们需要使用 Page 结构体来记录一页内存的相关信息：
 
 \begin{minted}[linenos]{c}
 typedef LIST_ENTRY(Page) Page_LIST_entry_t;
@@ -84,9 +85,9 @@ struct Page {
 中定义了一系列的宏函数来简化对链表的操作。请阅读这些宏函数的代码，理解它们的原理和巧妙之处。
 
 \begin{thinking}\label{think-do_while}
-我们注意到我们把宏函数的函数体写成了 \mintinline{c}|do { // ... } while(0)| 的形式，而不是
+我们注意到我们把宏函数的函数体写成了 \mintinline{c}|do { /* ... */ } while(0)| 的形式，而不是
 仅仅写成形如
-\mintinline{c}|{// ... }| 的语句块，这样的写法好处是什么？
+\mintinline{c}|{ /* ... */ }| 的语句块，这样的写法好处是什么？
 \end{thinking}
 
 在 include/pmap.h 中，我们使用 LIST\_HEAD 宏来定义了一个结构体类型 Page\_list ，在 mm/pmap.c
@@ -97,6 +98,12 @@ LIST_HEAD(Page_list, Page);
 
 static struct Page_list page_free_list; /* Free list of physical pages */
 \end{minted}
+
+\begin{thinking}\label{think-do_while}
+注意，我们定义的 Page 结构体只是一个信息的载体，它只代表了相应物理内存页的信息，它本身并不是物理内存页。
+那我们的物理内存页究竟在哪呢？Page 结构体又是通过怎样的方式找到它代表的物理内存页的地址呢？
+请你阅读 include/pmap.h 与 mm/pmap.c 中相关代码，给出你的想法。
+\end{thinking}
 
 \subsection{内存分配和释放}
 
@@ -114,7 +121,7 @@ u_long extmem;           /* Amount of extended memory(in bytes) */
 根据代码注释中的提示，完成 mips\_detect\_memory() 函数。
 \end{exercise}
 
-在操作系统刚刚启动时，我们还没有建立起有效的数据结构来管理所有的物理内存，因此， 出于最基本的
+在操作系统刚刚启动时，我们还没有建立起有效的数据结构来管理所有的物理内存，因此，出于最基本的
 内存管理的需求，我们需要实现一个函数来分配指定字节的物理内存。这一功能由 mm/pmap.c 中的
 alloc函数来实现。
 
