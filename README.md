@@ -1,42 +1,95 @@
-# 北航小操作系统实验指导书
+# BUAA Operating System Experiment Guide Book [![Build Status](https://travis-ci.org/SivilTaram/BUAAOS-guide-book.svg?branch=master)](https://travis-ci.org/SivilTaram/BUAAOS-guide-book)
+## ChangeLog
 
-## 编译说明
-
-- 在linux环境下:
-
-在目录`guide-book`下，直接使用`make`即可生成`guide-book.pdf`文件，需要预装有`xelatex`环境，推荐使用`texlivefull-2015`。
-
-- 在windows环境下:
-
-使用`xelatex -shell-escape -8bit guide-book.tex` 2次即可得到`guide-book.pdf`文件。windows下值得注意的是，由于无默认字体，需要在`guide-book.tex`中添加`\setCJKmainfont{中文字体名}`即可显示中文。
-
-
-## 版本变更记录
+### 2016/3/28
+Use [Travis-CI](https://travis-ci.org/SivilTaram/BUAAOS-guide-book/builds) to build automatically and upload. You can get the latest version in [releases](https://github.com/SivilTaram/BUAAOS-guide-book/releases).
 
 ### 2016/3/12 
-指导书开源,版本号 v1.0.0
-### 2015/7/4 
-指导书开始撰写
+The book is hosted on Github.
 
-## 文件目录结构树
-|--- chapters (包含了lab1-lab6的主要内容tex文件)
+### 2015/7/4
+Plan to write the guide-book.
 
-|--- codes (所有长段代码都在codes里有源文件)
+## How to Build
 
-|--- fonts (四种adobe字体,在linux下安装后可以直接使用)
+### Ubuntu
 
-|--- images (指导书中出现过的图片)
+In `ubuntu`,you can easily build it by `.install.sh`.
 
-|--- preface (前言，包含了老师寄语与编者寄语)
+```shell
+git clone https://github.com/SivilTaram/BUAAOS-guide-book.git
+cd BUAAOS-guide-book
+chmod a+x .install.sh
+```
+And then you can run `.install.sh` to install the all environments.
 
-|--- guide-book.tex (主tex文件，用于编译)
+```shell
+./.install.sh
+```
+And then you have all environments for building it.
 
-|--- title-page.tex (封面tex文件)
+If you want to build it,you can do as follow:
+```shell
+cd guide-book
+make
+```
+
+And then you will get a `guide-book.pdf` in you directory `guide-book`.
+
+### Windows
+
+You can use `xelatex -shell-escape -8bit guide-book.tex` twice in directory `guide-book`, and you can get `guide-book.pdf`。
+
+**Note: You should add `\setCJKmainfont{font-name}` to `guide-book.tex` as a result of loss of default zh-fonts in windows.**
+
+## How to Contribute
+
+If you find any *bug* or *wrong*, welcome to contribute to make the book better.
+
+### Not Familiar with latex
+If you are not familiar with *latex* and *github*, you can also open an [issue](https://github.com/SivilTaram/BUAAOS-guide-book/issues). Just click the button `New issue` to notice us.
+
+### Familiar with latex
+
+If you are familiar with *latex* and *github*, welcome to fork and pull request. Please guarantee the PR pass the auto-build in [Travis-CI](https://travis-ci.org/SivilTaram/BUAAOS-guide-book/builds).
+
+- If you just want to commit something but it may bring failure, you can commit as follow:
+
+```shell
+git commit -m "[ci skip] xxxx"
+```
+
+- If your commits can make auto-build success, you can push as follow:
+
+```shell
+git tag -a v1.1.1 -m "tags content"
+git push --tags
+git push
+```
+*The `v1.1.1` is the version number of guide-book.*
+
+And then you can make a pull request.
+
+## Index Tree
+
+|--- chapters (the main components of lab1~6)
+
+|--- codes (the source code which is too long)
+
+|--- fonts (four fonts of adobe used in ubuntu)
+
+|--- images (images which appear in guide-book)
+
+|--- preface (include teacher and authors' wishes)
+
+|--- guide-book.tex (the main .tex file)
+
+|--- title-page.tex
 
 |--- Makefile 
 
-## 主要贡献者(按姓名拼音排序)
+## Contributors
 
-- 何涛(@sighingnow)
-- 刘乾(@SivilTaram)
-- 王鹿鸣(@fzyz999)
+- He Tao(@[sighingnow](https://github.com/sighingnow))
+- Liu Qian(@[SivilTaram](https://github.com/SivilTaram))
+- Wang Luming(@[fzyz999](https://github.com/fzyz999))

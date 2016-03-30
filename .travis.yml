@@ -1,14 +1,36 @@
 sudo: required
 dist: trusty
-
 before_install:
-  - sudo apt-get -y install texlive-full
-  - sudo mkdir -p /usr/share/font/
-  - sudo mv ./guide-book/fonts/AdobeFangsongStd-Regular.otf /usr/share/font/
-  - sudo mv ./guide-book/fonts/AdobeHeitiStd-Regular\ \(v5.010\).otf /usr/share/font/
-  - sudo mv ./guide-book/fonts/AdobeKaitiStd-Regular\ \(v5.010\).otf /usr/share/font/
-  - sudo mv ./guide-book/fonts/AdobeSongStd-Light\ \(v5.010\).otf /usr/share/font/
-  - sudo fc-cache -fv
+- sudo apt-get update
+- sudo apt-get -y install texlive-full
+- sudo tex -v
+- sudo mkdir -p /usr/share/fonts/opentype/
+- sudo mv ./guide-book/fonts/AdobeFangsongStd-Regular.otf /usr/share/fonts/opentype/
+- sudo mv ./guide-book/fonts/AdobeHeitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
+- sudo mv ./guide-book/fonts/AdobeKaitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
+- sudo mv ./guide-book/fonts/AdobeSongStd-Light\ \(v5.010\).otf /usr/share/fonts/opentype/
+- sudo mkfontscale
+- sudo mkfontdir
+- sudo fc-cache -fv
+- fc-list :lang=zh
+- sudo wget http://mirrors.ctan.org/macros/latex/contrib/minted.zip
+- sudo unzip minted.zip
+- cd minted/
+- sudo make
+- sudo mv minted.sty /usr/share/texlive/texmf-dist/tex/latex/minted
+- sudo mv minted1.sty /usr/share/texlive/texmf-dist/tex/latex/minted
+- cd ..
+- sudo apt-get install python-pygments
 script:
-  - cd guide-book
-  - make
+- cd guide-book
+- make
+- cd ..
+- mv guide-book/guide-book.pdf guide-book.pdf
+deploy:
+  provider: releases
+  api_key:
+    secure: Z89xqQVepwpqUdPxrLdwFZh7qko5UgDXr6lOlt0KtRYNwbsoDiRO4uzXmJmn6ejES8nAjBB7rVwQ+0sAFk80dcM1GkiUx7TCYXPkpyUnCnOPmI64ohHhvYYm9EbIyihgQ7MKcugRpyLhsxkjnsjpoJdL57RS4R8ecbZwfghIrko8hLIJJqcusdG6exw0DD08BTYoog2bvLO0Rb82FQBn4pXW+eXACtxH14CFoGsKe/4aL/IlXzSYMFlA3NJx5Rf1BaC4EDr6+/kXnQyno7dH7oS5Me1ZKtR2O4q5nHP3hbZPweSlTAZ+FEjo1R44oDNy0YNKkoXCImt0XiQqjrFS0EEiJFyFYeo3N6oYGJqRE1qkA7KDgNVPabXOCtyWzWrxDi241JaXNBd0CBI4RQk2TmJ7Zk5uR5x9U/z1E5mje37IsvQS9lzyaB2SKAImQfhFb5TMeE9N6rhRd/wNQVuZYVxr66mrFv5kjii4S5YzidFP5QbgidzsVeftdBaHY98K+JiXBllcWifpbbFiPeXqfEMojr0Siz8K53mu/BUy9lymrsGWluUxaMmMuUIrjDSuFR8v6Ewl88IQ1nlnNgUoW3hA7KGTi223mQbvcjnBk3+CZj2E1e61ojnYumtFtPHwPeH213McsQR/1qwvxSOled8A7HKr62pcnD2tlETLNWg=
+  file: guide-book.pdf
+  skip_cleanup: true
+  on:
+    repo: SivilTaram/BUAAOS-guide-book
