@@ -154,7 +154,7 @@ alloc 函数能够按照参数 align 进行对齐，然后分配 n 字节大小�
 
 \begin{thinking}\label{think-bzero}
 在 init.h 中定义了\mintinline{c}|bzero(void *b, size_t)|这样一个函数,请你思考，此处的b指针是一个物理地址，
-还是一个虚拟地址呢？ 
+还是一个虚拟地址呢？
 \end{thinking}
 
 有了分配物理内存的功能后，接下来我们需要给操作系统内核必须的数据结构 -- 页目录（pgdir）、内存控制块
@@ -395,7 +395,11 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
 \begin{thinking}\label{think-tlb}
 思考一下tlb\_out 汇编函数，结合代码阐述一下跳转到\textbf{NOFOUND}的流程？
 \end{thinking}
-
+\subsection{TLB重填}
+  通过之前的实验，我们可以知道，虚拟地址通过MMU转换成物理地址，然后通过物理地址我们能够在主存中获得相应的数据。而实际上，在MIPS架构中，关于这一块
+  内存翻译的内容，很大程度上与TLB有关。TLB可以看做是一块页表的高速缓存，里面存储了一些物理页面与虚拟页面的对应关系。而当CPU访问相应内存地址时，会先去
+  TLB中查询。当TLB中没有相应对应关系时会触发一个TLB缺失异常。而而MIPS将这个异常的处理，全权交给了软件。因此若发生缺失异常，则会跳转到相应异常处理程序中，
+  再由我们的二级页表进行相应的地址翻译，对TLB进行重填。
 \section{正确结果展示}
 
 实验二做完之后，正确的结果应该是这样的：
