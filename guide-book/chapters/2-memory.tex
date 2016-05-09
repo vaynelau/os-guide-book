@@ -416,7 +416,7 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
     printf("pa value: \%x\\n", *((u_long *)((u_long)pa + (u_long)ULIM)));
   \end{minted}
 
-  这段代码旨在计算出相应va与pa的对应关系，设置权限位为PTE_R是为了能够将数据写入内存。
+  这段代码旨在计算出相应va与pa的对应关系，设置权限位为PTE\_R是为了能够将数据写入内存。
   \begin{thinking}\label{think-memory-access}
   显然，运行后结果与我们预期的不符，va值为0x88888，相应的pa中的值为0。这说明我们的代码中存在问题，请你仔细思考我们的访存模型，指出问题所在。
   \end{thinking}
