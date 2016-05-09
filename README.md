@@ -96,3 +96,4 @@ And then you can make a pull request.
 - He Tao(@[sighingnow](https://github.com/sighingnow))
 - Liu Qian(@[SivilTaram](https://github.com/SivilTaram))
 - Wang Luming(@[fzyz999](https://github.com/fzyz999))
+- Wang Zhengdong(@[Jueast](https://github.com/Jueast))
