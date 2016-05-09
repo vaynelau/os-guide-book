@@ -395,11 +395,35 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
 \begin{thinking}\label{think-tlb}
 思考一下tlb\_out 汇编函数，结合代码阐述一下跳转到\textbf{NOFOUND}的流程？
 \end{thinking}
-\subsection{TLB重填}
+\subsection{访存与TLB重填}
   通过之前的实验，我们可以知道，虚拟地址通过MMU转换成物理地址，然后通过物理地址我们能够在主存中获得相应的数据。而实际上，在MIPS架构中，关于这一块
   内存翻译的内容，很大程度上与TLB有关。TLB可以看做是一块页表的高速缓存，里面存储了一些物理页面与虚拟页面的对应关系。而当CPU访问相应内存地址时，会先去
-  TLB中查询。当TLB中没有相应对应关系时会触发一个TLB缺失异常。而而MIPS将这个异常的处理，全权交给了软件。因此若发生缺失异常，则会跳转到相应异常处理程序中，
-  再由我们的二级页表进行相应的地址翻译，对TLB进行重填。
+  TLB中查询。当TLB中没有相应对应关系时会触发一个\textbf{TLB缺失异常}。而而MIPS将这个异常的处理，全权交给了软件。因此若发生缺失异常，则会跳转到相应异常处理程序中，
+  再由我们的二级页表进行相应的地址翻译，对TLB进行重填。换句话说，MIPS中并没有一个执行内存地址翻译的MMU处理器，CPU完成了相应工作。
+
+  为了深究整个过程，我们需要设置好相应的链接脚本，使得mips的异常处理机制能够正常工作（关于此处和异常的详情请参照lab3中相关内容）
+
+  接着我们在page\_check最后一句printf之前添加如下代码段。
+  \begin{minted}[linenos]{c}
+    u_long* va = 0x12450;
+    u_long* pa;
+
+    page_insert(boot_pgdir, pp, va, PTE_R);
+    pa = va2pa(boot_pgdir, va);
+    printf("va: \%x -> pa: \%x\\n", va, pa);
+    *va = 0x88888;
+    printf("va value: \%x\\n", *va);
+    printf("pa value: \%x\\n", *((u_long *)((u_long)pa + (u_long)ULIM)));
+  \end{minted}
+
+  这段代码旨在计算出相应va与pa的对应关系，设置权限位为PTE_R是为了能够将数据写入内存。
+  \begin{thinking}\label{think-memory-access}
+  显然，运行后结果与我们预期的不符，va值为0x88888，相应的pa中的值为0。这说明我们的代码中存在问题，请你仔细思考我们的访存模型，指出问题所在。
+  \end{thinking}
+  \begin{thinking}\label{think-tlb-refill}
+  在gxemul中，通过添加-t参数能够看到镜像中函数调用关系，请你善加利用这个特性，找出与tlb重填有关的函数。
+  \end{thinking}
+  另外，还可以提醒大家的是，在gxemul中，有tlbdump这个命令，可以随时查看tlb中的内容。
 \section{正确结果展示}
 
 实验二做完之后，正确的结果应该是这样的：
