@@ -318,7 +318,7 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 \end{exercise}
 
 \subsection{地址映射}
-
+一个空荡荡的页表自然不会对我们的内存翻译有帮助，我们需要在具体的物理内存与虚拟地址间建立映射，即将相应的物理页面地址填入对应虚拟地址的页表项中。
 \begin{exercise}
 实现 mm/pmap.c 中的 boot\_map\_segment 函数，实现将制定的物理内存与虚拟内存建立起映射的功能。
 \end{exercise}
