@@ -162,10 +162,22 @@ GCC在生成调用msyscall函数的代码时已经按照标准为我们开了一
 在系统调用机制搞定之后，我们自然是要弄几个系统调用玩一玩了。我们实现些什么系统调用呢？打开 lib/syscall\_all.c，可以看到玲琅满目的系统调用函数等着我们去填写。这些系统调用都是基础的系统调用，不论是之后的IPC还是fork，都需要这些基础的系统调用作为支撑。
 首先我们看向sys\_mem\_alloc。这个函数的主要功能是分配内存，简单的说来，用户程序可以通过这个系统调用给该程序所允许的虚拟内存空间内存分配实际的物理内存，需要用到一些我们之前在pmap.c中所定义的函数
 \begin{exercise}
-实现lib/syscall\_all.c中的void sys\_mem\_alloc(int sysno,u\_int dstva)函数
+实现lib/syscall\_all.c中的int sys\_mem\_alloc(int sysno,u\_int envid, u\_int va, u\_int perm)函数
 \end{exercise}
-
-
+我们再来看sys\_mem\_map,这个函数的参数很多，但是意义也很直接：将源进程地址空间中的相应内存映射到目标进程的相应地址空间的相应虚拟内存中去。换句话说，此时两者共享着一页物理内存。
+\begin{exercise}
+实现lib/syscall\_all.c中的int sys\_mem\_map(int sysno,u\_int srcid, u\_int srcva, u\_int dstid, u\_dstva, u\_int perm)函数
+\end{exercise}
+关于内存的还有一个函数：sys\_mem\_unmap,正如字面意义所显示的，这个系统调用的功能是解除某个进程地址空间虚拟内存和物理内存之间的映射关系。
+\begin{exercise}
+实现lib/syscall\_all.c中的int sys\_mem\_unmap(int sysno,u\_int envid, u\_int va)函数
+\end{exercise}
+除了与内存相关的函数外，另外一个常用的系统调用函数是sys\_yield，这个函数的功能主要就在于实现用户进程对CPU的放弃，可以利用我们之前已经编写好的函数，
+另外为了通过我们之前编写的进程切换机制保存现场，这里需要在KERNEL_SP和TIMESTACK上做一点准备工作
+\begin{exercise}
+实现lib/syscall\_all.c中的void sys\_yield(void)函数
+\end{exercise}
+可能你也注意到了，在此我们的系统调用函数并没使用到它的第一个参数sysno，在这里，sysno作为系统调用号被传入，现在起的更多是一个”占位“的作用，能和之前用户层面的系统调用函数参数顺序相匹配，更好理解。
 \section{进程间通信机制(Inter-Process Communication)}
 在系统调用机制搞定之后，我们自然是要弄几个系统调用玩一玩了。作为一个微内核系统，我们要来实现个什么系统调用呢？
 没错，当然是IPC了。IPC可是微内核最重要的机制之一了。
@@ -239,6 +251,8 @@ sys\_ipc\_recv(int sysno,u\_int dstva)函数首先要将env\_ipc\_recving设置�
 
 int sys\_ipc\_can\_send(int sysno,u\_int envid, u\_int value, u\_int srcva, u\_int perm)函数用于发送消息。
 如果指定进程为可接收状态，则发送成功，清除接收进程的接收状态，使其可运行，返回0，否则，返会\_E\_IPC\_NOT\_RECV。
+
+值得一提的是，由于在我们的用户程序中，会大量使用srcva为0的调用来表示不需要传递物理页面，因此在编写相关函数时也需要注意此种情况。
 
 讲完IPC后，我们来利用前面已经实现了的基础系统调用来实现一个非常有意思的函数：fork。
 
