@@ -15,6 +15,20 @@ Plan to write the guide-book.
 
 ## How to Build
 
+### Dependence
++ Adobe fonts
+
+Available at guide-book/fonts, install it please.
+
++ TeX Live 2013 or later
+
++ pygments
+
+To install pygments in Ubuntu:
+```shell
+sudo apt-get install python-pygments
+```
+
 ### Ubuntu
 
 In `ubuntu`,you can easily build it by `.install.sh`.
