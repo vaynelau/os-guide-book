@@ -1,6 +1,9 @@
 # BUAA Operating System Experiment Guide Book [![Build Status](https://travis-ci.org/SivilTaram/BUAAOS-guide-book.svg?branch=master)](https://travis-ci.org/SivilTaram/BUAAOS-guide-book)
 ## ChangeLog
 
+### 2016/8/4
+Fixed some bugs in .install.sh
+
 ### 2016/5/9
 Fixed some decription on lab4.
 
