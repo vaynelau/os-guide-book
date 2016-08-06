@@ -67,13 +67,13 @@ stage 2运行在RAM中，此时有足够的运行环境从而可以用C语言来
 这一阶段的工作包括，初始化这一阶段需要使用的硬件设备以及其他功能，然后将内核镜像文件从存储器读到RAM中，并为内核设置启动参数，
 最后将CPU指令寄存器的内容设置为内核入口函数的地址，即可将控制权从bootloader转交给操作系统内核。
 
+从CPU上电到操作系统内核被加载的整个启动的步骤如图\ref{fig:bootloader-steps}所示。
+
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=10cm]{bootloader-steps.eps}
+  \includegraphics[width=10cm]{bootloader-steps.png}
   \caption{启动的基本步骤}\label{fig:bootloader-steps} 
 \end{figure}
-
-从CPU上电到操作系统内核被加载的整个启动的步骤如图\ref{fig:bootloader-steps}所示。
 
 需要注意的是，以上bootloader的两个工作阶段只是从功能上论述内核加载的过程，在具体实现上不同的系统可能有所差别，而且对于不同的硬件环境也会有些不同。
 在我们常见的x86 PC的启动过程中，首先执行的是BIOS中的代码，主要完成硬件初始化相关的工作，
@@ -171,14 +171,14 @@ SSH是Secure Shell的缩写。它是一种用于建立安全的远程连接的�
 连接到虚拟机以后，我们就可以开始动手阅读并修改代码了。但当你看到光秃秃的命令行的时候，是否感到一阵心慌？
 到底该如何打开并编辑一个文件呢？我们先从一个简易的工具入手：nano。
 
+nano的主界面如图\ref{fig:nano}所示。所有基本的操作都被罗列在下面。其中界面上显示的向上的尖状符号（\verb|^|）代表\textbf{Ctrl}，
+后面的字母就代表相应的快捷键。例如保存是\textbf{Ctrl+O}。nano较为容易上手，但功能相对有限。如果你需要更为强大的功能，可以使用vim。
+
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=12cm]{nano.png}
   \caption{nano界面}\label{fig:nano} 
 \end{figure}
-
-nano的主界面如图\ref{fig:nano}所示。所有基本的操作都被罗列在下面。其中界面上显示的向上的尖状符号（\verb|^|）代表\textbf{Ctrl}，
-后面的字母就代表相应的快捷键。例如保存是\textbf{Ctrl+O}。nano较为容易上手，但功能相对有限。如果你需要更为强大的功能，可以使用vim。
 
 Vim被誉为编辑器之神，是程序员为程序员设计的编辑器，编辑效率高，十分适合编辑代码。关于如何入门Vim，网络上的资料实在太多，这里就不再赘述了。
 推荐一篇质量极高的Vim教程《简明Vim练级攻略》(\url{http://coolshell.cn/articles/5426.html})。只需要十多分钟的阅读，
