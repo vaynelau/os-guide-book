@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# install texlive 2015 and dependencies
+# install texlive-full
 apt-get update && \
 apt-get install -y --no-install-recommends \
     texlive-full \
