@@ -21,7 +21,7 @@ fc-cache -fv
 fc-list :lang=zh
 
 # install the extra packages
-cp -rf /guide-book/extraPackage/* /usr/share/texlive/texmf-dist/tex/latex/
+cp -rf /guide-book/extraPackage/*  /usr/share/texlive/texmf-dist/tex/latex/
 
 # run make
 cd guide-book
