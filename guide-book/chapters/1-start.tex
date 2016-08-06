@@ -67,13 +67,13 @@ stage 2运行在RAM中，此时有足够的运行环境从而可以用C语言来
 这一阶段的工作包括，初始化这一阶段需要使用的硬件设备以及其他功能，然后将内核镜像文件从存储器读到RAM中，并为内核设置启动参数，
 最后将CPU指令寄存器的内容设置为内核入口函数的地址，即可将控制权从bootloader转交给操作系统内核。
 
-从CPU上电到操作系统内核被加载的整个启动的步骤如图\ref{fig:bootloader-steps}所示。
-
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=10cm]{bootloader-steps.eps}
   \caption{启动的基本步骤}\label{fig:bootloader-steps} 
 \end{figure}
+
+从CPU上电到操作系统内核被加载的整个启动的步骤如图\ref{fig:bootloader-steps}所示。
 
 需要注意的是，以上bootloader的两个工作阶段只是从功能上论述内核加载的过程，在具体实现上不同的系统可能有所差别，而且对于不同的硬件环境也会有些不同。
 在我们常见的x86 PC的启动过程中，首先执行的是BIOS中的代码，主要完成硬件初始化相关的工作，
