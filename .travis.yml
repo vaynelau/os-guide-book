@@ -1,31 +1,13 @@
 sudo: required
-dist: trusty
-before_install:
-- sudo apt-get update
-- sudo apt-get -y install texlive-full
-- sudo tex -v
-- sudo mkdir -p /usr/share/fonts/opentype/
-- sudo mv ./guide-book/fonts/AdobeFangsongStd-Regular.otf /usr/share/fonts/opentype/
-- sudo mv ./guide-book/fonts/AdobeHeitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
-- sudo mv ./guide-book/fonts/AdobeKaitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
-- sudo mv ./guide-book/fonts/AdobeSongStd-Light\ \(v5.010\).otf /usr/share/fonts/opentype/
-- sudo mkfontscale
-- sudo mkfontdir
-- sudo fc-cache -fv
-- fc-list :lang=zh
-- sudo wget http://mirrors.ctan.org/macros/latex/contrib/minted.zip
-- sudo unzip minted.zip
-- cd minted/
-- sudo make
-- sudo mv minted.sty /usr/share/texlive/texmf-dist/tex/latex/minted
-- sudo mv minted1.sty /usr/share/texlive/texmf-dist/tex/latex/minted
-- cd ..
-- sudo apt-get install python-pygments
+dist: xenial
+services:
+- docker
 script:
-- cd guide-book
-- make
-- cd ..
+- docker run --rm -v $(pwd)/guide-book:/guide-book ubuntu:16.04 bash /guide-book/build.sh
 - mv guide-book/guide-book.pdf guide-book.pdf
+branches:
+  only:
+    - /^v[\d.]+\d$/
 deploy:
   provider: releases
   api_key:
