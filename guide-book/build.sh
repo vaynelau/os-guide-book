@@ -3,16 +3,11 @@
 # install texlive 2015 and dependencies
 apt-get update && \
 apt-get install -y --no-install-recommends \
-    texlive-latex-extra \
-    texlive-latex-recommended \
-    texlive-fonts-extra \
-    texlive-fonts-recommended \
-    texlive-lang-chinese \
-    texlive-formats-extra \
-    lmodern \
+    texlive-full \
+    python-pygments \
     make \
     wget \
-    xzdec
+    unzip
 
 # install the fonts
 mkdir -p /usr/share/fonts/opentype/
@@ -33,11 +28,6 @@ make
 mv minted.sty /usr/share/texlive/texmf-dist/tex/latex/minted
 mv minted1.sty /usr/share/texlive/texmf-dist/tex/latex/minted
 cd ..
-apt-get install -y --no-install-recommends python-pygments
-
-# intsall latex packages
-tlmgr init-usertree
-tlmgr install ulem
 
 # run make
 cd guide-book
