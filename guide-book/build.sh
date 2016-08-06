@@ -20,14 +20,8 @@ mkfontdir
 fc-cache -fv
 fc-list :lang=zh
 
-# install the minted
-wget http://mirrors.ctan.org/macros/latex/contrib/minted.zip
-unzip minted.zip
-cd minted/
-make
-mv minted.sty /usr/share/texlive/texmf-dist/tex/latex/minted
-mv minted1.sty /usr/share/texlive/texmf-dist/tex/latex/minted
-cd ..
+# install the extra packages
+cp -rf /guide-book/extraPackage/* /usr/share/texlive/texmf-dist/tex/latex/
 
 # run make
 cd guide-book
