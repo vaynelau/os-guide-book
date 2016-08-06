@@ -6,6 +6,7 @@ sudo: required
 
 services:
   - docker
+
 script:
 - docker run --rm -v $(pwd)/guide-book:/guide-book ubuntu:16.04 bash /guide-book/build.sh
 - mv guide-book/guide-book.pdf guide-book.pdf
