@@ -10,6 +10,7 @@ apt-get install -y --no-install-recommends \
     texlive-lang-chinese \
     texlive-formats-extra \
     lmodern \
+    make \
     wget \
     xzdec
 
