@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #coding:utf-8
-import sys   ##加载sys这个模块。
+import sys
 import Image
 
 for i in range(1,len(sys.argv)):
