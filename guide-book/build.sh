@@ -9,6 +9,8 @@ apt-get install -y --no-install-recommends \
     texlive-fonts-recommended \
     texlive-lang-chinese \
     texlive-formats-extra \
+    texlive-extra-utils \
+    texlive-generic-recommended \
     python-pygments \
     lmodern \
     wget \
