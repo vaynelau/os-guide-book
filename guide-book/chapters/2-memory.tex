@@ -188,12 +188,12 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 
 \subsection{两级页表机制}
 
-我们的操作系统内核采取二级页表结构，如图\ref{lab2-pic-1.png}所示：
+我们的操作系统内核采取二级页表结构，如图\ref{lab2-pic-1}所示：
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=12cm]{lab2-pic-1.png}
-  \caption{二级页表结构示意图}\label{lab2-pic-1.png}
+  \includegraphics[width=12cm]{lab2-pic-1}
+  \caption{二级页表结构示意图}\label{lab2-pic-1}
 \end{figure}
 
 第一级表称为页目录(page directory)，一共1024个页目录项，每个页目录项32位(4 Byte)，页目录项存储
@@ -244,13 +244,13 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 
 首先，我们可以通过 PDX(va) 来获得一个虚拟地址对应的页目录索引，然后直接以凭借索引在页目录中得到对应的
 二级页表的基址(物理地址)，然后把这个物理地址转化为内核虚拟地址(KADDR)，之后，通过 PTX(va) 获得这个
-虚存地址对应的页表索引，然后就可以从页表中得到对应的页面的物理地址。整个转换的过程如 图\ref{lab2-pic-2.png}
+虚存地址对应的页表索引，然后就可以从页表中得到对应的页面的物理地址。整个转换的过程如 图\ref{lab2-pic-2}
 所示：
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=12cm]{lab2-pic-2.png}
-  \caption{地址转换过程}\label{lab2-pic-2.png}
+  \includegraphics[width=12cm]{lab2-pic-2}
+  \caption{地址转换过程}\label{lab2-pic-2}
 \end{figure}
 
 \subsection{页目录自映射}

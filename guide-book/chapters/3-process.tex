@@ -167,8 +167,8 @@ mips汇编中使用一些特权指令如\mintinline{gas}|mtc0|、\mintinline{gas
 那么这种微妙的关系应该类似于下面这种：（图中灰色代表不可用，白色代表可用）
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=14cm]{Process.png}
-  \caption{进程页表与内核页表的关系}\label{fig:Process.png} 
+  \includegraphics[width=14cm]{Process}
+  \caption{进程页表与内核页表的关系}\label{fig:Process} 
 \end{figure}
 
 
@@ -183,11 +183,11 @@ mips汇编中使用一些特权指令如\mintinline{gas}|mtc0|、\mintinline{gas
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=15cm]{3-R3000_SR.png}
-  \caption{R3000的SR寄存器示意图}\label{fig:3-R3000_SR.png} 
+  \includegraphics[width=15cm]{3-R3000_SR}
+  \caption{R3000的SR寄存器示意图}\label{fig:3-R3000_SR} 
 \end{figure}
 
-图\ref{fig:3-R3000_SR.png}是我们MIPSR3000里的SR(status register)寄存器示意图，就是我们在env\_tf里的cp0\_ status。
+图\ref{fig:3-R3000_SR}是我们MIPSR3000里的SR(status register)寄存器示意图，就是我们在env\_tf里的cp0\_ status。
 
 第28bit设置为1，表示处于用户模式下。
 
@@ -473,11 +473,11 @@ TIMESTACK问题可能将是你在本实验中需要思考时间最久的问题�
 我们实验里认为凡是引起控制流突变的都叫做异常，而中断仅仅是异常的一种，并且是仅有的一种异步异常。
 \end{note}
 
-我们可以通过一个简单的图来认识一下异常的产生与返回（见图\ref{fig:3-exception.png})。
+我们可以通过一个简单的图来认识一下异常的产生与返回（见图\ref{fig:3-exception})。
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=15cm]{3-exception.png}
-  \caption{异常处理图示}\label{fig:3-exception.png} 
+  \includegraphics[width=15cm]{3-exception}
+  \caption{异常处理图示}\label{fig:3-exception} 
 \end{figure}
 
 \subsection{异常的分发}
@@ -522,10 +522,10 @@ END(except_vec3)
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=15cm]{3-CauseRegister.png}
-  \caption{CR寄存器}\label{fig:3-CauseRegister.png} 
+  \includegraphics[width=15cm]{3-CauseRegister}
+  \caption{CR寄存器}\label{fig:3-CauseRegister} 
 \end{figure}
-图\ref{fig:3-CauseRegister.png}是MIPS3000中Cause Register寄存器。
+图\ref{fig:3-CauseRegister}是MIPS3000中Cause Register寄存器。
 其中保存着CPU中哪一些中断或者异常已经发生。bit2~bit6保存着异常码，也就是根据异常码来识别具体哪一个异常发生了。
 bit8~bit15保存着哪一些中断发生了。其他的一些位含义在此不涉及，可参看MIPS开发手册。
 
