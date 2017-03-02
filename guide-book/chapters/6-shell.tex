@@ -95,7 +95,7 @@ pipe(int pfd[2])
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=15cm]{6-pipe-after-fork.eps}
+	\includegraphics[width=15cm]{6-pipe-after-fork}
 	\caption{父子进程与管道缓冲区}\label{fig:6-pipe-after-fork} 
 \end{figure}
 
@@ -103,7 +103,7 @@ pipe(int pfd[2])
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=15cm]{6-pipe-after-close.eps}
+	\includegraphics[width=15cm]{6-pipe-after-close}
 	\caption{关闭不使用的端口后}\label{fig:6-pipe-after-close} 
 \end{figure}
 
@@ -165,7 +165,8 @@ pageref(rfd) + pageref(wfd) = pageref(pipe)\label{variant}
 
 实际上，因为管道本身的共享性质，所以在管道中有一系列的竞争情况。在当前这种不加锁控制的情况下，我们无法保证\mintinline{c}|_pipeisclosed|用于管道另一端关闭的判断一定返回正确的结果。
 
-我们重新看之前写的\mintinline{c}|_pipeisclosed|函数。在这个函数中我们对\mintinline{c}|pageref(fd structure)与 pageref(pipe structure)|进行了等价关系的判断。假如不考虑进程竞争，不论是在读者还是写者进程中，我们会认为:
+我们重新看之前写的\mintinline{c}|_pipeisclosed|函数。在这个函数中我们对\mintinline{c}|pageref(fd structure)|与 
+\mintinline{c}|pageref(pipe structure)|进行了等价关系的判断。假如不考虑进程竞争，不论是在读者还是写者进程中，我们会认为:
 
 \begin{itemize}
 	\item 对fd和对pipe的pp\_ref 的\textbf{写入}是同步的。
@@ -321,9 +322,6 @@ shell本质上也是一个用户进程。它解释shell命令的工作是通过�
 	\item \hyperref[think-dup]{\textbf{\textcolor{baseB}{思考-dup中的进程竞争}}}
 	\item \hyperref[think-automatic]{\textbf{\textcolor{baseB}{思考-原子操作}}}
 	\item \hyperref[think-race]{\textbf{\textcolor{baseB}{思考-解决进程竞争}}}
-	\item \hyperref[think-pc]{\textbf{\textcolor{baseB}{思考-进程上下文的PC值}}}
-	\item \hyperref[think-TIMESTACK]{\textbf{\textcolor{baseB}{思考-TIMESTACK的含义}}}
-	\item \hyperref[think-调度]{\textbf{\textcolor{baseB}{思考-不公的调度}}}
 \end{itemize}
 
 

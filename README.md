@@ -1,6 +1,16 @@
 # BUAA Operating System Experiment Guide Book [![Build Status](https://travis-ci.org/SivilTaram/BUAAOS-guide-book.svg?branch=master)](https://travis-ci.org/SivilTaram/BUAAOS-guide-book)
 ## ChangeLog
 
+### 2016/8/7
+Update the automatic compilation system.
+Change all eps files into jpg files to avoid some compile-errors.
+Update the Makefile to saving time.
+Because of the historical reasons,we have to wget the fvextra.sty form their github.
+Fix the .install.sh
+
+### 2016/8/4
+Fixed some bugs in .install.sh
+
 ### 2016/5/9
 Fixed some decription on lab4.
 
@@ -14,6 +24,22 @@ The book is hosted on Github.
 Plan to write the guide-book.
 
 ## How to Build
+
+### Dependence
++ Adobe fonts
+
+Available at guide-book/fonts, install it please.
+
++ TeX Live 2013 or later
+
++ pygments
+
++ fvextra.sty
+
+To install pygments in Ubuntu:
+```shell
+sudo apt-get install python-pygments
+```
 
 ### Ubuntu
 

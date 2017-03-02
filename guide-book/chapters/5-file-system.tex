@@ -39,12 +39,12 @@
   \item 磁头(head)：每个磁盘有两个面，每个面都有一个磁头。当对磁盘进行读写操作时，磁头在盘片上快速移动。
 \end{enumerate}
 
-典型的磁盘的基本结构如图\ref{lab5-pic-1.png}所示：
+典型的磁盘的基本结构如图\ref{lab5-pic-1}所示：
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=12cm]{lab5-pic-1.png}
-  \caption{磁盘结构示意图}\label{lab5-pic-1.png}
+  \includegraphics[width=12cm]{lab5-pic-1}
+  \caption{磁盘结构示意图}\label{lab5-pic-1}
 \end{figure}
 
 \section{IDE磁盘}
@@ -212,12 +212,12 @@ Unix/Linux操作系统一般将磁盘分成两个区域：inode 区域和 data �
 
 \subsection{磁盘布局}
 
-磁盘空间的基本布局如图\ref{lab5-pic-2.png}所示。
+磁盘空间的基本布局如图\ref{lab5-pic-2}所示。
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=12cm]{lab5-pic-2.png}
-  \caption{磁盘空间布局示意图}\label{lab5-pic-2.png}
+  \includegraphics[width=12cm]{lab5-pic-2}
+  \caption{磁盘空间布局示意图}\label{lab5-pic-2}
 \end{figure}
 
 从图中可以看到磁盘最开始的一个扇区(512字节)被当成是启动扇区和分区表使用。接下来的一个扇区用作
@@ -317,12 +317,12 @@ free_block(u_int blockno)
 请思考，在满足磁盘块缓存的设计的前提下，我们实验使用的内核支持的最大磁盘大小是多少？
 \end{thinking}
 
-为了建立起磁盘地址空间和进程虚存地址空间之间的缓存映射，我们采用这样一种设计：结构如图\ref{lab5-pic-4.png}。
+为了建立起磁盘地址空间和进程虚存地址空间之间的缓存映射，我们采用这样一种设计：结构如图\ref{lab5-pic-4}。
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=12cm]{lab5-pic-4.png}
-  \caption{块缓存示意图}\label{lab5-pic-4.png}
+  \includegraphics[width=12cm]{lab5-pic-4}
+  \caption{块缓存示意图}\label{lab5-pic-4}
 \end{figure}
 
 \begin{exercise}
@@ -348,12 +348,12 @@ fs/fs.c 中的 diskaddr 函数用来计算指定磁盘块对应的虚存地址�
 \subsection{文件系统详细结构}
 
 在操作系统的学习中，我们多次提到，操作系统要想管理一类资源，就得有相应的数据结构。我们使用文件控制块来描述和管理文件。
-文件在磁盘上的组织形式如图\ref{lab5-pic-3.png}所示：
+文件在磁盘上的组织形式如图\ref{lab5-pic-3}所示：
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=12cm]{lab5-pic-3.png}
-  \caption{文件控制块}\label{lab5-pic-3.png}
+  \includegraphics[width=12cm]{lab5-pic-3}
+  \caption{文件控制块}\label{lab5-pic-3}
 \end{figure}
 
 对应的文件控制块的定义：
@@ -375,7 +375,7 @@ struct File {
 用来记录文件的数据块在磁盘上的位置。每个磁盘块的大小为 4KB，也就是说，这十个直接指针能够表示最大 40KB
 的文件，而当文件的大小大于 40KB 时，就需要用到间接指针。
 File 结构体中有一个域为 \mintinline{c}|f_indirect|，只想一个间接磁盘块，用来存储指向文件内容
-的磁盘块的指针。为了简化计算，我们不使用间接磁盘块的前十个指针。文件控制块的结构如图\ref{lab5-pic-3.png}。
+的磁盘块的指针。为了简化计算，我们不使用间接磁盘块的前十个指针。文件控制块的结构如图\ref{lab5-pic-3}。
 
 \begin{note}
 我们的文件系统中文件控制块只是用了一级间接指针域，也只有一个。而在真是的文件系统中，对了支持更大的文件，通
