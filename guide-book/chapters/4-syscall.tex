@@ -160,15 +160,15 @@ GCC在生成调用msyscall函数的代码时已经按照标准为我们开了一
 \subsection{基础系统调用函数}
 
 在系统调用机制搞定之后，我们自然是要弄几个系统调用玩一玩了。我们实现些什么系统调用呢？打开 lib/syscall\_all.c，可以看到玲琅满目的系统调用函数等着我们去填写。这些系统调用都是基础的系统调用，不论是之后的IPC还是fork，都需要这些基础的系统调用作为支撑。
-首先我们看向sys\_mem\_alloc。这个函数的主要功能是分配内存，简单的说来，用户程序可以通过这个系统调用给该程序所允许的虚拟内存空间内存分配实际的物理内存，需要用到一些我们之前在pmap.c中所定义的函数
+首先我们看向sys\_mem\_alloc。这个函数的主要功能是分配内存，简单的说，用户程序可以通过这个系统调用给该程序所允许的虚拟内存空间内存分配实际的物理内存，需要用到一些我们之前在pmap.c中所定义的函数
 \begin{exercise}
 实现lib/syscall\_all.c中的int sys\_mem\_alloc(int sysno,u\_int envid, u\_int va, u\_int perm)函数
 \end{exercise}
-我们再来看sys\_mem\_map,这个函数的参数很多，但是意义也很直接：将源进程地址空间中的相应内存映射到目标进程的相应地址空间的相应虚拟内存中去。换句话说，此时两者共享着一页物理内存。
+我们再来看sys\_mem\_map，这个函数的参数很多，但是意义也很直接：将源进程地址空间中的相应内存映射到目标进程的相应地址空间的相应虚拟内存中去。换句话说，此时两者共享着一页物理内存。
 \begin{exercise}
 实现lib/syscall\_all.c中的int sys\_mem\_map(int sysno,u\_int srcid, u\_int srcva, u\_int dstid, u\_dstva, u\_int perm)函数
 \end{exercise}
-关于内存的还有一个函数：sys\_mem\_unmap,正如字面意义所显示的，这个系统调用的功能是解除某个进程地址空间虚拟内存和物理内存之间的映射关系。
+关于内存的还有一个函数：sys\_mem\_unmap, 正如字面意义所显示的，这个系统调用的功能是解除某个进程地址空间虚拟内存和物理内存之间的映射关系。
 \begin{exercise}
 实现lib/syscall\_all.c中的int sys\_mem\_unmap(int sysno,u\_int envid, u\_int va)函数
 \end{exercise}
