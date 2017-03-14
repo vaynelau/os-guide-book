@@ -1,7 +1,6 @@
 branches:
   only:
     - /^v[\d.]+\d$/
-    - master
 
 sudo: required
 
