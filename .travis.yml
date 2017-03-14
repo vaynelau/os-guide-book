@@ -1,6 +1,7 @@
 branches:
   only:
     - /^v[\d.]+\d$/
+    - master
 
 sudo: required
 
@@ -18,4 +19,5 @@ deploy:
   file: guide-book.pdf
   skip_cleanup: true
   on:
+    tags: true
     repo: SivilTaram/BUAAOS-guide-book
