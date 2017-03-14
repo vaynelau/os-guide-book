@@ -173,7 +173,7 @@ GCC在生成调用msyscall函数的代码时已经按照标准为我们开了一
 实现lib/syscall\_all.c中的int sys\_mem\_unmap(int sysno,u\_int envid, u\_int va)函数
 \end{exercise}
 除了与内存相关的函数外，另外一个常用的系统调用函数是sys\_yield，这个函数的功能主要就在于实现用户进程对CPU的放弃，可以利用我们之前已经编写好的函数，
-另外为了通过我们之前编写的进程切换机制保存现场，这里需要在KERNEL_SP和TIMESTACK上做一点准备工作
+另外为了通过我们之前编写的进程切换机制保存现场，这里需要在KERNEL\_SP和TIMESTACK上做一点准备工作
 \begin{exercise}
 实现lib/syscall\_all.c中的void sys\_yield(void)函数
 \end{exercise}
