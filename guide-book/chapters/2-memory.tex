@@ -153,7 +153,7 @@ alloc 函数能够按照参数 align 进行对齐，然后分配 n 字节大小�
 定是否将新分配的内存全部清零，并最终返回新分配的内存的首地址。
 
 \begin{thinking}\label{think-bzero}
-在 init.h 中定义了\mintinline{c}|bzero(void *b, size_t)|这样一个函数,请你思考，此处的b指针是一个物理地址，
+在 mmu.h 中定义了\mintinline{c}|bzero(void *b, size_t)|这样一个函数,请你思考，此处的b指针是一个物理地址，
 还是一个虚拟地址呢？
 \end{thinking}
 
