@@ -844,7 +844,7 @@ sw      $16,16($fp)     #
 而C语言的标准库是建立在操作系统基础之上的。所以，当我们开发操作系统的时候，我们就会发现，我们失去了C语言标准库的支持。
 我们需要用到的几乎所有东西，都需要我们自己来实现。
 
-要弄懂系统如何将一个字符输出到终端当中，需要阅读以下三个文件：lib/printf.c，lib/print.c和driver/gxemul/console.c。
+要弄懂系统如何将一个字符输出到终端当中，需要阅读以下三个文件：lib/printf.c，lib/print.c和drivers/gxconsole/console.c。
 相信阅读这些代码对于聪明的你来说，完全不是问题，我们就不再赘述了。
 
 \begin{exercise}
