@@ -27,7 +27,8 @@ env_alloc(struct Env **new, u_int parent_id)
     /*Step 1: Get a new Env from env_free_list*/
 
     
-    /*Step 2: Call certain function(has been implemented) to init kernel memory layout for this new Env.
+    /*Step 2: Call certain function(has been implemented) to init kernel memory
+     * layout for this new Env.
      *The function mainly maps the kernel address to this new Env address. */
 
 

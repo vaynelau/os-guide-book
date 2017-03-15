@@ -862,6 +862,32 @@ sw      $16,16($fp)     #
 \url{http://www.cplusplus.com/reference/cstdio/printf/}}。完整的描述较为复杂，我们只需实现我们所有能够支持的部分即可。
 例如，内核中是无法使用浮点数的，因此所有和浮点输出相关的东西都不必要实现。
 
+\section{实验正确结果}
+如果你正确地实现了前面所要求的全部内容，你将在gxemul中观察到如下输出，这标志着你顺利完成了lab1实验（仍需阅读本章中余下的内容，以便掌握提交代码所需的git技能）。
+
+\begin{minted}[linenos]{text}
+GXemul 0.4.6    Copyright (C) 2003-2007  Anders Gavare
+Read the source code and/or documentation for other Copyright messages.
+
+Simple setup...
+    net: simulating 10.0.0.0/8 (max outgoing: TCP=100, UDP=100)
+        simulated gateway: 10.0.0.254 (60:50:40:30:20:10)
+            using nameserver 202.112.128.51
+    machine "default":
+        memory: 64 MB
+        cpu0: R3000 (I+D = 4+4 KB)
+        machine: MIPS test machine
+        loading gxemul/vmlinux
+        starting cpu0 at 0x80010000
+-------------------------------------------------------------------------------
+
+main.c:	main is start ...
+
+init.c:	mips_init() is called
+
+panic at init.c:24: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+\end{minted}
+
 \section{Git——轻松维护和提交代码}
 
 在完成了这次实验后，你刚刚伸了个懒腰。突然，一个问题浮现在了你的脑海中：如何提交刚刚完成的实验代码呢？
