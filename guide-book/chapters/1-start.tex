@@ -549,7 +549,7 @@ VirtAddr是我们尤为需要注意的。由于它的存在，我们就不难推
 以及各个segment应该被加载到的位置。下面的指令可以输出默认的连接脚本，你可以在自己的机器上尝试这一条指令：
 
 \begin{minted}[linenos]{bash}
-ld --verbose
+ld -{}-verbose
 \end{minted}
 
 这里，我们再补充一下关于ELF文件中section的概念。在链接过程中，目标文件被看成section的集合，并使用section header table来描述各个section的组织。
@@ -966,7 +966,7 @@ Notes to test.
 注意，弹出的窗口中我们\textbf{必须}得添加本次commit的说明，这意味着我们不能提交空白说明，否则我们的提交不会成功。而且在添加评论之后，可以按提示按键来成功保存。
 
 \begin{note}
-初学者一般不太重视git commit内容的有效性，总是使用无意义的字符串作为说明提交。但以后你可能就会发现自己写了一个自己看得懂，别人也能看得懂提交说明是多么庆幸。所以尽量让你的每次提交显得有意义，比如“fixed a bug in ..."这样的描述，顺便推荐一条命令：git commit --amend，这条命令可以重新书写你最后一次commit的说明。
+初学者一般不太重视git commit内容的有效性，总是使用无意义的字符串作为说明提交。但以后你可能就会发现自己写了一个自己看得懂，别人也能看得懂提交说明是多么庆幸。所以尽量让你的每次提交显得有意义，比如“fixed a bug in ..."这样的描述，顺便推荐一条命令：git commit -{}-amend，这条命令可以重新书写你最后一次commit的说明。
 \end{note}
 
 这样窗口提交的方式比较繁琐，我们可以采取一种较为简洁的方式\label{git commit}
@@ -1002,11 +1002,11 @@ $ git commit -m "Notes to test."
 
 Run
 
-  git config --global user.email "you@example.com"
-  git config --global user.name "Your Name"
+  git config -{}-global user.email "you@example.com"
+  git config -{}-global user.name "Your Name"
 
 # to set your account’s default identity.
-# Omit --global to set the identity only in this repository.
+# Omit -{}-global to set the identity only in this repository.
 \end{minted}
 
 相信大家从第一句也能推测出，这是要求我们设置提交者身份的。我们设置身份有什么作用呢？别急，等你设置成功了我们再详谈。
@@ -1014,15 +1014,15 @@ Run
 \begin{note}
 从上面我们也知道了，我们可以用  
 
-  git config --global user.email “you@example.com”
+  git config -{}-global user.email “you@example.com”
   
-  git config --global user.name “Your Name“
+  git config -{}-global user.name “Your Name“
   
 这两条命令设置我们的名字和邮箱，在我们的实验中对这两个没有什么要求，大家随性设置就好，给个示例：
 
-  git config --global user.email “qianlxc@126.com”
+  git config -{}-global user.email “qianlxc@126.com”
   
-  git config --global user.name “Qian”
+  git config -{}-global user.name “Qian”
 \end{note}
 
 现在你已设置了提交者的信息，那么做一下这个小练习来快速上手Git的使用吧
@@ -1068,7 +1068,7 @@ Modified.txt的内容如下
 # On branch master
 # Changes not staged for commit:
 #   (use "git add <file>..." to update what will be committed)
-#   (use "git checkout -- <file>..." to discard changes in working directory)
+#   (use "git checkout -{}- <file>..." to discard changes in working directory)
 #
 #	modified:   README.txt
 #
@@ -1123,9 +1123,9 @@ no changes added to commit (use "git add" and/or "git commit -a")
 \item 图中我们可以看出此时 "HEAD" 实际是指向 master 分支的一个“游标”。所以图示的命令中出现 HEAD 的地方可以用 master 来替换。
 \item 当对工作区修改（或新增）的文件执行 "git add" 命令时，暂存区的目录树被更新，同时工作区修改（或新增）的文件内容被写入到对象库中的一个新的对象中，而该对象的ID 被记录在暂存区的文件索引中。
 \item 当执行提交操作（git commit）时，会将暂存区的目录树写到版本库（对象库）中，master 分支会做相应的更新。即 master 指向的目录树就是提交时暂存区的目录树。
-\item 当执行 "git rm --cached <file>" 命令时，会直接从暂存区删除文件，工作区则不做出改变。
+\item 当执行 "git rm -{}-cached <file>" 命令时，会直接从暂存区删除文件，工作区则不做出改变。
 \item 当执行 "git reset HEAD" 命令时，暂存区的目录树会被重写，被 master 分支指向的目录树所替换，但是工作区不受影响。
-\item 当执行 "git checkout -- <file>" 命令时，会用暂存区指定的文件替换工作区的文件。这个操作很危险，会清除工作区中未添加到暂存区的改动。
+\item 当执行 "git checkout -{}- <file>" 命令时，会用暂存区指定的文件替换工作区的文件。这个操作很危险，会清除工作区中未添加到暂存区的改动。
 \item 当执行 "git checkout HEAD <file>" 命令时，会用 HEAD 指向的 master 分支中的指定文件替换暂存区和以及工作区中的文件。这个命令也是极具危险性的，因为不但会清除工作区中未提交的改动，也会清除暂存区中未提交的改动。
 \end{itemize}
 
@@ -1144,8 +1144,8 @@ Git中引入的\textbf{暂存区}的概念可以说是Git里最难理解但是�
 我们都知道多啦A梦的时光机能穿越时空回到过去，而在我们神奇的Git里，也有堪称时光机的指令哦！在学习之前,我们先学习一下已经大致了解的一些伪·时光机指令，比如下面这些
 
 \begin{description}
-\item[git rm --cached <file>] 这条指令是指从暂存区中删去一些我们不想跟踪的文件，比如我们自己调试用的文件等。
-\item[git checkout -- <file>] 如果我们在工作区改呀改，把一堆文件改得乱七八糟的，发现编译不过了！别急，如果我们还没git add，就能使用这条命令，把它变回曾经美妙的样子。
+\item[git rm -{}-cached <file>] 这条指令是指从暂存区中删去一些我们不想跟踪的文件，比如我们自己调试用的文件等。
+\item[git checkout -{}- <file>] 如果我们在工作区改呀改，把一堆文件改得乱七八糟的，发现编译不过了！别急，如果我们还没git add，就能使用这条命令，把它变回曾经美妙的样子。
 \item[git reset HEAD <file>] 刚才提到，如果没有git add 把修改放入暂存区的话，我们可以使用checkout命令，那么如果我们不慎已经 git add 加入了怎么办呢？那就需要这条指令来帮助我们了！这条指令可以让我们的\textbf{暂存区}焕然一新。再对同一个文件使用楼上那条指令，哈哈，世界清静了。
 \item[git clean <file> -f] 如果你的工作区这时候混入了奇怪的东西，你没有追踪它，但是想清除它的话就可以使用这条指令，它可以帮你把奇怪的东西剔除出去。
 \end{description}
@@ -1165,7 +1165,7 @@ Git中引入的\textbf{暂存区}的概念可以说是Git里最难理解但是�
 介绍完上面三条撤销指令，我们来介绍真正的时光机指令
 
 \begin{minted}[linenos]{bash}
- git reset --hard
+ git reset -{}-hard
 \end{minted}
 
 为了体会它的作用，我们做个小练习试一下
@@ -1176,9 +1176,9 @@ Git中引入的\textbf{暂存区}的概念可以说是Git里最难理解但是�
 		\item 在文件里加入\textbf{Testing 1}，add，commit，提交说明写 1。
 		\item 模仿上述做法，把1分别改为 2 和 3，再提交两次。
 		\item 使用 git log命令查看一下提交日志，看是否已经有三次提交了？记下提交说明为 3 的哈希值\footnote{使用git log命令时，在commit 标识符后的一长串数字和字母组成的字符串}。
-		\item 开动时光机！使用 git reset --hard HEAD\verb|^| ，现在再使用git log，看看什么没了？
-		\item 找到提交说明为1的哈希值，使用 git reset --hard <Hash-code> ，再使用git log，看看什么没了？
-		\item 现在我们已经回到过去了，为了再次回到未来，使用 git reset --hard <Hash-code> ，再使用git log，我胡汉三又回来了！
+		\item 开动时光机！使用 git reset -{}-hard HEAD\verb|^| ，现在再使用git log，看看什么没了？
+		\item 找到提交说明为1的哈希值，使用 git reset -{}-hard <Hash-code> ，再使用git log，看看什么没了？
+		\item 现在我们已经回到过去了，为了再次回到未来，使用 git reset -{}-hard <Hash-code> ，再使用git log，我胡汉三又回来了！
 	\end{itemize}
 \end{exercise}
 
@@ -1327,7 +1327,7 @@ To git@github.com:1406xxxx.git
 error: 无法推送一些引用到 'git@github.com:1406xxxx.git' 
 提示：更新被拒绝，因为您当前分支的最新提交落后于其对应的远程分支。 
 提示：再次推送前，先与远程变更合并（如 'git pull ...'）。详见 
-提示：'git push --help' 中的 'Note about fast-forwards' 小节。
+提示：'git push -{}-help' 中的 'Note about fast-forwards' 小节。
 
 英文版：
 To git@github.com:1406xxxx.git
@@ -1336,7 +1336,7 @@ error: failed to push some refs to 'To git@github.com:1406xxxx.git'
 hint: Updates were rejected because the tip of your current branch is behind
 hint: its remote counterpart. Integrate the remote changes (e.g.
 hint: 'git pull ...') before pushing again.
-hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+hint: See the 'Note about fast-forwards' in 'git push -{}-help' for details.
 \end{minted}
 
 你的提示可能是英文的，但这并不妨碍问题的发生，这个问题是因为什么而产生的呢？我们来分析一下，想象你在公司和在家操作同一个分支，在公司你对一个文件进行了修改，然后进行了提交。回了家又对同样的文件做了不同的修改，在家中使用push同步到远程分支了。但等你回到公司再push的时候就会发现一个严重的问题：现在远程仓库和本地仓库已经分离开变成两条岔路了（见图\ref{git-remote-branches})。
