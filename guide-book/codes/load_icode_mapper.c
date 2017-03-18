@@ -8,7 +8,8 @@
  * segment size in memory.
  *
  * Pre-Condition:
- *   va aligned 4KB and bin can't be NULL.
+ *   bin can't be NULL.
+ *   Hint: va may NOT aligned 4KB.
  *
  * Post-Condition:
  *   return 0 on success, otherwise < 0.
