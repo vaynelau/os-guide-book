@@ -386,6 +386,16 @@ File 结构体中有一个域为 \mintinline{c}|f_indirect|，只想一个间接
 一个 Block 最多存储 1024 个指向其他磁盘块的指针，试计算，我们的文件系统支持的单个文件的最大大小为多大？
 \end{thinking}
 
+对于普通的文件，其指向的磁盘块存储着文件内容，而对于目录文件来说，其指向的磁盘块存储着该目录下各个文件对应的的文件控制块。当我们要查找某个文件时，首先从超级块中读取根目录的文件控制块，然后沿着目标路径，挨个查看当前目录的子文件是否与下一级目标文件同名，如此便能查找到最终的目标文件。
+
+\begin{thinking}\label{think-filenum}
+查找代码中的相关定义，试回答一个磁盘块中最多能存储多少个文件控制块？一个目录最多能有多少个子文件？
+\end{thinking}
+
+\begin{exercise}
+补完 \mintinline{c}|dir_lookup| 函数，查找某个目录下是否存在指定的文件。（提示：使用\mintinline{c}|file_get_block|可以将某个指定文件指向的磁盘块读入内存）。
+\end{exercise}
+
 为了更加细致地了解文件系统的内部结构，我们使用 C 语言程序（fs/fsformat.c）来模拟对磁盘的操作，掌握如何将文件
 和文件夹按照文件系统的格式写入磁盘，我们也正是通过 fsformat 程序来创建一个磁盘文件 fs/fs.img 供内核使用。请
 阅读 fs/fsformat.c 中的代码，掌握文件系统结构的具体细节。感兴趣的同学，可以参考 \mintinline{c}|write_file|
@@ -432,12 +442,33 @@ fs/fs.img 的根目录下。
 路径的文件的功能。
 \end{exercise}
 
+当用户进程试图打开一个文件时，需要一个文件描述符（file descriptor）来存储文件的基本信息。当用户进程相文件系统发送打开文件的请求时，文件系统进程会将这些基本信息记录在内存中，然后由操作系统将用户进程请求的地址映射到同一个物理页上，因此一个文件描述符至少需要独占一页的空间。当用户进程获取了文件大小等基本信息后，再次向文件系统发送请求将文件内容映射到指定内存空间中。
+
+\begin{thinking}\label{think-Filefd-Fd}
+阅读 user/file.c 中的众多代码，发现很多函数中都会将一个 struct Fd * 型的指针转换为 struct Filefd * 型的指针，请解释为什么这样的转换可行。
+\end{thinking}
+
+\begin{thinking}\label{think-fileid}
+在打开一个文件的过程中，用户进程和文件系统进程映射到各自内存中的内容有何不同（从位置、内容等方面作答）？阅读 user/fsipc.c 其中有很多函数都会向文件系统发送 \mintinline{c}|fileid| ，试解释其作用。
+\end{thinking}
+
+\begin{exercise}
+完成user/file.c中的 \mintinline{c}|open| 函数。（提示：若成功打开文件则该函数返回文件描述符的编号）。
+\end{exercise}
+
+当我们要读取一个大文件中间的一小部分内容时，从头读到尾是极为浪费的，因此我们需要一个指针帮助我们在文件中定位，在C语言中拥有类似功能的函数是 \mintinline{c}|fseek| 。而在读写期间，每次读写也会更新该指针的值。请自行查阅C语言有关文件操作的函数，理解相关概念。
+
+\begin{exercise}
+参考user/fd.c中的 \mintinline{c}|write| 函数，完成 \mintinline{c}|read| 函数。
+\end{exercise}
+
+
 \section{正确结果展示}
 
-在 init/init.c 中启动一个 idle 进程和文件系统服务进程：
+在 init/init.c 中启动一个 fstest 进程和文件系统服务进程：
 
 \begin{minted}[linenos]{c}
-    ENV_CREATE(user_idle);
+    ENV_CREATE(user_fstest);
     ENV_CREATE(fs_serv);
 \end{minted}
 
@@ -457,6 +488,14 @@ file_get_block is good
 file_flush is good
 file_truncate is good
 diskno: 0
+file rewrite is good
+serve_open 00000800 ffff000 0x2
+open is good
+read is good
+diskno: 0
+serve_open 00000800 ffff000 0x0
+open again: OK
+read again: OK
 file rewrite is good
 \end{minted}
 
