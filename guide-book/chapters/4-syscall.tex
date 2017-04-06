@@ -88,14 +88,14 @@ End of assembler dump.
   \item 直接使用操作系统的功能是很繁复的（每次都需要设置必要的寄存器，并执行syscall指令）
 \end{itemize}
 
-之后，我们再来整理一下调用C标注库中的puts函数的过程中发生了什么：
+之后，我们再来整理一下调用C标准库中的puts函数的过程中发生了什么：
 \begin{enumerate}
   \item 调用puts函数
   \item 在一系列的函数调用后，最终调用了write函数。
   \item write函数设置了为寄存器设置了相应的值，并执行了syscall指令。
   \item 进入内核态，内核中相应的函数或服务被执行。
   \item 回到用户态的write函数中，将系统调用的结果从相关的寄存器中取回，并返回。
-  \item 再次经过一系列的返回过程后，回到了put函数中。
+  \item 再次经过一系列的返回过程后，回到了puts函数中。
   \item puts函数返回。
 \end{enumerate}
 
