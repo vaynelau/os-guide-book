@@ -119,7 +119,7 @@ LIST_HEAD(Page_list, Page);
 static struct Page_list page_free_list; /* Free list of physical pages */
 \end{minted}
 
-\begin{thinking}\label{think-Struct page}
+\begin{thinking}\label{think-struct-page}
 注意，我们定义的 Page 结构体只是一个信息的载体，它只代表了相应物理内存页的信息，它本身并不是物理内存页。
 那我们的物理内存页究竟在哪呢？Page 结构体又是通过怎样的方式找到它代表的物理内存页的地址呢？
 请你阅读 include/pmap.h 与 mm/pmap.c 中相关代码，给出你的想法。
@@ -398,30 +398,40 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
 \subsection{访存与TLB重填}
   通过之前的实验，我们可以知道，虚拟地址通过MMU转换成物理地址，然后通过物理地址我们能够在主存中获得相应的数据。而实际上，在MIPS架构中，关于这一块
   内存翻译的内容，很大程度上与TLB有关。TLB可以看做是一块页表的高速缓存，里面存储了一些物理页面与虚拟页面的对应关系。而当CPU访问相应内存地址时，会先去
-  TLB中查询。当TLB中没有相应对应关系时会触发一个\textbf{TLB缺失异常}。而而MIPS将这个异常的处理，全权交给了软件。因此若发生缺失异常，则会跳转到相应异常处理程序中，
+  TLB中查询。当TLB中没有相应对应关系时会触发一个\textbf{TLB缺失异常}。而MIPS将这个异常的处理，全权交给了软件。因此若发生缺失异常，则会跳转到相应异常处理程序中，
   再由我们的二级页表进行相应的地址翻译，对TLB进行重填。换句话说，MIPS中并没有一个执行内存地址翻译的MMU处理器，CPU完成了相应工作。
 
-  为了深究整个过程，我们需要设置好相应的链接脚本，使得mips的异常处理机制能够正常工作（关于此处和异常的详情请参照lab3中相关内容）
+  如果大家仔细地理解了上面这段话，就会发现MMU的正常工作需要\textbf{异常处理}的支持。由于我们暂时还不了解异常的相关内容，因此在本次实验中实际上并没有真正地启用MMU，而只是先创建了页表。
+  在lab3中学习完中断和异常后，我们就能够见到一个真正启用的MMU了。
 
-  接着我们在page\_check最后一句printf之前添加如下代码段。
+  而现在，为了深究整个过程，让我们来一起探索一个假设情境：在page\_check最后一句printf之前添加如下代码段。
+  提醒一下，由于MMU暂时没有启用，这段代码目前不能在我们的系统中实际运行：
+
   \begin{minted}[linenos]{c}
     u_long* va = 0x12450;
     u_long* pa;
 
     page_insert(boot_pgdir, pp, va, PTE_R);
     pa = va2pa(boot_pgdir, va);
-    printf("va: \%x -> pa: \%x\\n", va, pa);
+    printf("va: %x -> pa: %x\n", va, pa);
     *va = 0x88888;
-    printf("va value: \%x\\n", *va);
-    printf("pa value: \%x\\n", *((u_long *)((u_long)pa + (u_long)ULIM)));
+    printf("va value: %x\n", *va);
+    printf("pa value: %x\n", *((u_long *)((u_long)pa + (u_long)ULIM)));
   \end{minted}
 
   这段代码旨在计算出相应va与pa的对应关系，设置权限位为PTE\_R是为了能够将数据写入内存。
+
+  如果MMU能够正常工作，实际输出将会是：
+
+  \begin{minted}[linenos]{c}
+    va: 12450 -> pa: 3ffd000
+    va value: 88888
+    pa value: 0
+    page_check() succeeded!
+  \end{minted}
+
   \begin{thinking}\label{think-memory-access}
   显然，运行后结果与我们预期的不符，va值为0x88888，相应的pa中的值为0。这说明我们的代码中存在问题，请你仔细思考我们的访存模型，指出问题所在。
-  \end{thinking}
-  \begin{thinking}\label{think-tlb-refill}
-  在gxemul中，通过添加-t参数能够看到镜像中函数调用关系，请你善加利用这个特性，找出与tlb重填有关的函数。
   \end{thinking}
   另外，还可以提醒大家的是，在gxemul中，有tlbdump这个命令，可以随时查看tlb中的内容。
 \section{正确结果展示}
@@ -451,11 +461,11 @@ panic at init.c:55: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 \begin{itemize}
 \item \hyperref[think-do_while]{\textbf{\textcolor{baseB}{思考-使用do-while(0)语句的好处}}}
+\item \hyperref[think-struct-page]{\textbf{\textcolor{baseB}{思考-Page结构体与物理内存页}}}
 \item \hyperref[think-bzero]{\textbf{\textcolor{baseB}{思考-bzero参数探究}}}
 \item \hyperref[think-windows_pde_addr]{\textbf{\textcolor{baseB}{思考-自映射机制页目录地址的计算}}}
 \item \hyperref[think-tlb]{\textbf{\textcolor{baseB}{思考-NOFOUND的奥妙}}}
 \item \hyperref[think-memory-access]{\textbf{\textcolor{baseB}{思考-访存的问题}}}
-\item \hyperref[think-tlb-refill]{\textbf{\textcolor{baseB}{思考-寻找重填函数}}}
 \end{itemize}
 
 \section{挑战性任务}
