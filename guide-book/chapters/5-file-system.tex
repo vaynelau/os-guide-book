@@ -474,6 +474,10 @@ fs/fs.img 的根目录下。
 
 就能开始对文件系统的检测，运行文件系统服务，等待应用程序的请求。
 
+\begin{note}
+使用 gxemul –E testmips –C R3000 –M 64 -d gxemul/fs.img elf-file 运行 (其中 elf-file 是你编译生成的 vmlinux 文件的路径)。 
+\end{note}
+
 \begin{minted}[linenos]{c}
 FS is running
 FS can do I/O
