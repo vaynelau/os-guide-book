@@ -182,7 +182,7 @@ END(read_sector)
 我们来分析这两段代码。当需要从磁盘的指定位置读取一个 sector 时，需要调用 \mintinline{c}|read_sector|
 函数来将磁盘中对应sector 的数据读到设备缓冲区中。\textbf{所有的地址操作都需要将物理地址转换成内核虚拟地址}。
 根据Gxemul提供的与 ide disk 相关的数据表格，首先，设置 IDE disk 的 ID，从
-\mintinline{c}|read_sector| 函数的声明 \mintinline{c}|extern int read_sector(int diskno, int offset);|
+\mintinline{c}|read_sector| 函数的声明 \mintinline[breaklines]{c}|extern int read_sector(int diskno, int offset);|
 中可以看出，diskno 是第一个参数，对应的就是 \$a0 寄存器的值，因此，将其写入到 0x93000010 处，这样就表示
 我们将使用编号为 \$a0 的磁盘。我们的试验中，只使用了一块 simulated IDE disk, 因此，这个值应该为 0。
 接下来，将相对于磁盘起始位置的 offset 写入到 0x93000000 位置，表示在距离磁盘起始处 offset 的位置开始
@@ -415,7 +415,7 @@ fs/fs.img 的根目录下。
 等待其他程序的请求。
 
 \begin{thinking}\label{think-fs-serve}
-阅读\mintinline{c}|serve|函数的代码，我们注意到函数中包含了一个死循环\mintinline{c}|for (;;) {...}|，
+阅读\mintinline{c}|serve|函数的代码，我们注意到函数中包含了一个死循环\mintinline[breaklines]{c}|for (;;) {...}|，
 为什么这段代码不会导致整个内核进入panic状态？
 \end{thinking}
 
