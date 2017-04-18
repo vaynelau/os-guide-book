@@ -166,12 +166,12 @@ void ide_read(u_int diskno, u_int secno, void *dst, u_int nsecs)
 \mintinline{c}|read_sector| 函数：
 
 \begin{minted}[linenos]{asm}
-// read sector at specified offset from the beginning of the disk image.
+# read sector at specified offset from the beginning of the disk image.
 LEAF(read_sector)
-    sw  a0, 0x93000010  // select the IDE id.
-    sw  a1, 0x93000000  // offset.
+    sw  a0, 0x93000010  # select the IDE id.
+    sw  a1, 0x93000000  # offset.
     li  t0, 0
-    sb  t0, 0x93000020  // start read.
+    sb  t0, 0x93000020  # start read.
     lw  v0, 0x93000030
     nop
     jr  ra
