@@ -1,0 +1,3 @@
+compile:
+  script:
+    - bash guide-book/build.sh
