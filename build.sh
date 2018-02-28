@@ -35,9 +35,9 @@ fc-list :lang=zh
 # cp minted.sty minted1.sty /usr/share/texlive/texmf-dist/tex/latex/minted 
 
 # install fvextra.sty
-wget https://raw.githubusercontent.com/gpoore/fvextra/master/fvextra/fvextra.sty --no-check-certificate
-mkdir -p /usr/share/texlive/texmf-dist/tex/latex/fvextra
-cp fvextra.sty /usr/share/texlive/texmf-dist/tex/latex/fvextra
+# wget https://raw.githubusercontent.com/gpoore/fvextra/master/fvextra/fvextra.sty --no-check-certificate
+# mkdir -p /usr/share/texlive/texmf-dist/tex/latex/fvextra
+# cp fvextra.sty /usr/share/texlive/texmf-dist/tex/latex/fvextra
 
 # install latex packages
 tlmgr init-usertree
