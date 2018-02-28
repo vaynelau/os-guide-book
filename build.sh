@@ -19,10 +19,10 @@ apt-get install -y --no-install-recommends \
 
 # install the fonts
 mkdir -p /usr/share/fonts/opentype/
-cp /guide-book/fonts/AdobeFangsongStd-Regular.otf /usr/share/fonts/opentype/
-cp /guide-book/fonts/AdobeHeitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
-cp /guide-book/fonts/AdobeKaitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
-cp /guide-book/fonts/AdobeSongStd-Light\ \(v5.010\).otf /usr/share/fonts/opentype/
+cp guide-book/fonts/AdobeFangsongStd-Regular.otf /usr/share/fonts/opentype/
+cp guide-book/fonts/AdobeHeitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
+cp guide-book/fonts/AdobeKaitiStd-Regular\ \(v5.010\).otf /usr/share/fonts/opentype/
+cp guide-book/fonts/AdobeSongStd-Light\ \(v5.010\).otf /usr/share/fonts/opentype/
 mkfontscale
 mkfontdir
 fc-cache -fv
@@ -35,7 +35,7 @@ fc-list :lang=zh
 # cp minted.sty minted1.sty /usr/share/texlive/texmf-dist/tex/latex/minted 
 
 # install fvextra.sty
-wget https://raw.githubusercontent.com/gpoore/fvextra/master/fvextra/fvextra.sty
+wget https://raw.githubusercontent.com/gpoore/fvextra/master/fvextra/fvextra.sty --no-check-certificate
 mkdir -p /usr/share/texlive/texmf-dist/tex/latex/fvextra
 cp fvextra.sty /usr/share/texlive/texmf-dist/tex/latex/fvextra
 
