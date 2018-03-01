@@ -1,5 +1,8 @@
-# BUAA Operating System Experiment Guide Book [![Build Status](https://travis-ci.org/SivilTaram/BUAAOS-guide-book.svg?branch=master)](https://travis-ci.org/SivilTaram/BUAAOS-guide-book)
+# BUAA Operating System Experiment Guide Book [![pipeline status](https://git.cscore.net.cn/star_os/guide-book/badges/master/pipeline.svg)](https://git.cscore.net.cn/star_os/guide-book/commits/master)
 ## ChangeLog
+
+### 2018/3/1
+Project moved to self-hosted Gitlab with Gitlab CI.
 
 ### 2016/8/7
 Update the automatic compilation system.
@@ -46,8 +49,8 @@ sudo apt-get install python-pygments
 In `ubuntu`,you can easily build it by `.install.sh`.
 
 ```shell
-git clone https://github.com/SivilTaram/BUAAOS-guide-book.git
-cd BUAAOS-guide-book
+git clone git@git.cscore.net.cn:star_os/guide-book.git
+cd guide-book
 chmod a+x .install.sh
 ```
 And then you can run `.install.sh` to install the all environments.
@@ -76,13 +79,13 @@ You can use `xelatex -shell-escape -8bit guide-book.tex` twice in directory `gui
 If you find any *bug* or *wrong*, welcome to contribute to make the book better.
 
 ### Not Familiar with latex
-If you are not familiar with *latex* and *github*, you can also open an [issue](https://github.com/SivilTaram/BUAAOS-guide-book/issues). Just click the button `New issue` to notice us.
+If you are not familiar with *latex** and git, you can also open an [issue](https://git.cscore.net.cn/star_os/guide-book/issues). Just click the button `New issue` to notice us.
 
 ### Familiar with latex
 
-If you are familiar with *latex* and *github*, welcome to fork and pull request. Please guarantee the PR pass the auto-build in [Travis-CI](https://travis-ci.org/SivilTaram/BUAAOS-guide-book/builds).
+If you are familiar with *latex* and *git*, welcome to fork and pull request. Please guarantee the PR pass the auto-build in Gitlab CI.
 
-- If you just want to commit something but it may bring failure, you can commit as follow:
+- If you just want to commit something but it may bring failure, you can commit as follow: (TODO)
 
 ```shell
 git commit -m "[ci skip] xxxx"
@@ -115,7 +118,7 @@ And then you can make a pull request.
 
 |--- title-page.tex
 
-|--- Makefile 
+|--- Makefile
 
 ## Contributors
 

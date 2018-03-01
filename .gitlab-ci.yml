@@ -1,24 +1,27 @@
-image: ubuntu:16.04
-
-stages:
-  - build
-  - deploy
-
-pre-release:
-  stage: build
+.script_template: &build_script
   script:
     - sed -i 's/archive.ubuntu.com/mirrors.tencentyun.com/g' /etc/apt/sources.list
     - bash ./build.sh
     - mv guide-book/guide-book.pdf ./
+
+image: ubuntu:16.04
+
+stages:
+  - build
+
+pre-release:
+  stage: build
+  <<: *build_script
   artifacts:
     expire_in: 1 week
     paths:
       - guide-book.pdf
+  except:
+    - tags
 
 release:
-  stage: deploy
-  script:
-    - uname -a
+  stage: build
+  <<: *build_script
   artifacts:
     paths:
       - guide-book.pdf
