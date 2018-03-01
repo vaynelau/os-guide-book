@@ -1,11 +1,26 @@
+image: ubuntu:16.04
+
 stages:
   - build
+  - deploy
 
-pdf:
+default-job:
   stage: build
   script:
     - sed -i 's/archive.ubuntu.com/mirrors.tencentyun.com/g' /etc/apt/sources.list
     - bash ./build.sh
+    - mv guide-book/guide-book.pdf ./
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - guide-book.pdf
+
+release-job:
+  stage: deploy
+  script:
+    - uname -a
   artifacts:
     paths:
-      - guide-book/guide-book.pdf
+      - guide-book.pdf
+  only:
+    - tags
