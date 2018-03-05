@@ -33,7 +33,7 @@
 
 \usepackage{fancyhdr}
 \setlength{\headheight}{15.2pt}
-
+\setcounter{chapter}{-1}
 %----------------------------------------------------------------------------------------
 %       Useful Packages
 %----------------------------------------------------------------------------------------
@@ -241,7 +241,8 @@ leftmargin=13pt]{pcodeBox}
 
 \mainmatter
 \pagestyle{fancy}
-%\input{chapters/0-environment}
+%\input{chapters/7-environment}
+\input{chapters/0-introduction}
 \input{chapters/1-start}
 \input{chapters/2-memory}
 \input{chapters/3-process}
@@ -249,6 +250,6 @@ leftmargin=13pt]{pcodeBox}
 \input{chapters/5-file-system}
 \input{chapters/6-shell}
 \begin{appendix}
-\input{chapters/0-environment}
+\input{chapters/7-environment}
 \end{appendix}
 \end{document}
