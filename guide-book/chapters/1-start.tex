@@ -379,8 +379,58 @@ Disassembly of section .text:
 在目标文件中，记录了代码各个段的具体信息。连接器通过这些信息来将目标文件链接到一起。而ELF(Executable and Linkable Format)正是Unix上常用的一种目标文件格式。
 其实，不仅仅是目标文件，可执行文件也是使用ELF格式记录的。这一点通过ELF的全称也可以看出来。
 
-我们最终生成的内核是ELF格式的，被模拟器载入到内核中。因此，我们暂且只关注ELF是如何被载入到内核中，并且被执行的，
-而不再关心具体的连接细节。ELF中有两个相似却不同的概念segment和section。section记录了程序的代码段、数据段等各个段的内容，
+为了帮助你了解ELF文件，下一步我们需要进一步探究它的功能以及格式。
+
+ELF文件是一种对可执行文件、目标文件和库使用的文件格式，跟Windows下的PE文件格式类似。ELF格式是是UNIX系统实验室作为ABI(Application Binary Interface)而开发和发布的，现在早已经是Linux下的标准格式了。我们在之前曾经看见过的.o文件就是ELF所包含的三种文件类型中的一种，称为可重定位(relocatable)文件，其它两种文件类型分别是可执行(executable)文件和共享对象(shared object)文件，这两种文件都需要链接器对可重定位文件进行处理才能生成。
+
+你可以使用file命令来获得文件的类型，如图\ref{fig:lab1-file}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=18cm,height=6cm]{lab1-file}
+  \caption{file命令}\label{fig:lab1-file} 
+\end{figure}
+
+那么，ELF文件中都包含有什么东西呢？简而言之，就是和程序相关的所有必要信息，下图\ref{fig:lab1-elf-1}说明了ELF文件的结构：
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=8cm]{lab1-elf-1}
+  \caption{ELF文件结构}\label{fig:lab1-elf-1}
+\end{figure}
+
+通过上图我们可以知道，ELF文件从整体来说包含5个部分：
+
+\begin{enumerate}
+  \item ELF Header，包括程序的基本信息，比如体系结构和操作系统，同时也包含了Section Header Table和Program Header Table相对文件的偏移量(offset)。
+  \item Program Header Table，也可以称为Segment Table，主要包含程序中各个Segment的信息，Segment的信息需要在运行时刻使用。
+  \item Section Header Table，主要包含各个Section的信息，Section的信息需要在程序编译和链接的时候使用。
+  \item Segments，就是各个Segment。
+  \item Sections，就是各个Section。
+\end{enumerate}
+
+观察上图\ref{fig:lab1-elf-1}我们可以发现，Program Header Table和Section Header Table指向了同样的地方，这就说明两者所代表的内容是重合的，这意味着什么呢？意味着两者只是同一个东西的不同视图！产生这种情况的原因在于ELF文件需要在两种场合使用：
+
+  \begin{enumerate}
+    \item 组成可重定位文件，参与可执行文件和可共享文件的链接。
+    \item 组成可执行文件或者可共享文件，在运行时为加载器提供信息。
+  \end{enumerate}
+
+我们已经了解了ELF文件的大体结构，现在，我们需要你自己动手，阅读一个简易的ELF文件的解析程序，然后完成部分代码，来了解ELF文件各个部分的详细结构。
+
+\begin{exercise}
+阅读kerelf.h、readelf.c以及main.c三个文件中的代码，并完成readelf.c中缺少的代码，使得main.c程序可以正确编译和输出。
+\end{exercise}
+
+\begin{thinking}\label{think-endian}
+也许你会发现我们的readelf程序是不能解析之前生成的内核文件(内核文件是可执行文件)的，这是为什么呢？我们把这个问题留给你来思考。
+\end{thinking}
+
+通过刚才的练习，相信你已经对ELF文件有了一个比较充分的了解，你可能想进一步解析ELF文件来获得更多的信息，不过这个工作已经有人帮你做了，使用readelf工具，你就可以很方便地解析ELF文件。
+现在，我们继续内核的话题。
+
+我们最终生成的内核也是ELF格式的，被模拟器载入到内核中。因此，我们暂且只关注ELF是如何被载入到内核中，并且被执行的，
+而不再关心具体的连接细节。ELF中有两个相似却不同的概念segment和section，我们之前已经提到过，section记录了程序的代码段、数据段等各个段的内容，
 主要是连接器在连接的过程中需要使用。而segment则记录了每一段数据（包括代码等内容）需要被载入到哪里，记录了用于指导应用程序加载的各类信息。
 
 我们不妨来看一下，我们之前那个hello world程序的各个segment长什么样子。readelf工具可以方便地解析出elf文件的内容，这里我们使用它来分析我们的程序。
@@ -780,19 +830,101 @@ sw      $16,16($fp)     #
 相信阅读这些代码对于聪明的你来说，完全不是问题，我们就不再赘述了。
 
 \begin{exercise}
-阅读相关代码，并补全lib/print.c中lp\_Print()函数中缺失的部分来实现字符输出。
+阅读相关代码和下面对于函数规格的说明，补全lib/print.c中lp\_Print()函数中缺失的部分来实现字符输出。
 \end{exercise}
 
-当你刚看到lp\_Print()的代码时，也许会手忙脚乱。不知如何读起，更不清楚该如何补全它。这主要是由于，我们对于printf要实现的具体功能没有完整的认识。
-这里我们给出一些提示，printf的format specifier(也就是它的第一个参数)的格式如下：
+下面是我们需要完成的printf函数的具体说明，参考了标准C++文档\footnote{\url{http://www.cplusplus.com/reference/cstdio/printf/}}。
+
+函数原型：
+\begin{minted}[linenos]{c}
+void printf(const char* fmt, ...)
+\end{minted}
+
+参数fmt是和C中printf类似的格式字符串，除了可以包含一般字符，还可以包含格式符(format specifiers)，但略去并新添加了一些功能，格式符的原型为：
 
 \begin{equation*}
   \%[flags][width][.precision][length]specifier 
 \end{equation*}
 
-更详尽的描述，请大家查询C语言标准库的相关文档\footnote{推荐cplusplus，这个网站给出了很多的样例
-\url{http://www.cplusplus.com/reference/cstdio/printf/}}。完整的描述较为复杂，我们只需实现我们所有能够支持的部分即可。
-例如，内核中是无法使用浮点数的，因此所有和浮点输出相关的东西都不必要实现。
+其中specifier指定了输出变量的类型，参见下表\ref{tab:specifiers}：
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{cccp{6cm}}
+  \toprule
+  Specifier & 输出            & 例子\\
+  \midrule
+  b         & 无符号二进制数       & 110\\
+  d D       & 十进制数          & 920\\
+  o O       & 无符号八进制数       & 777\\
+  u U       & 无符号十进制数       & 920\\
+  x         & 无符号十六进制数，字母小写 & 1ab\\
+  X         & 无符号十六进制数，字母大写 & 1AB\\
+  c         & 字符            & a\\
+  s         & 字符串           & sample\\
+  \bottomrule
+  \end{tabular}
+  \caption{Specifiers说明\label{tab:specifiers}}
+\end{table}
+
+除了specifier之外，格式符也可以包含一些其它可选的副格式符(sub-specifier),有flag(表\ref{tab:flag})：
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{ccp{10cm}}
+  \toprule
+  flag & 描述\\
+  \midrule
+  -    & 在给定的宽度(width)上左对齐输出，默认为右对齐\\
+  0    & 当输出宽度和指定宽度不同的时候，在空白位置填充0\\
+  \bottomrule
+  \end{tabular}
+  \caption{flag说明\label{tab:flag}}
+\end{table}
+
+和width(表\ref{tab:width})：
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{cp{10cm}}
+  \toprule
+  width& \multicolumn{1}{c}{描述}\\
+  \midrule
+  数字& 指定了要打印数字的最小宽度，当这个值大于要输出数字的宽度，则对多出的部分填充空格，但当这个值小于要输出数字的宽度的时候则不会对数字进行截断。\\
+  \bottomrule
+  \end{tabular}
+  \caption{width说明\label{tab:width}}
+\end{table}
+
+以及precision(表\ref{tab:precision})：
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{cp{10cm}}
+  \toprule
+  .precision& \multicolumn{1}{c}{描述}\\
+  \midrule
+  .数字& 指定了精度，不同标识符下右不同的意义，但在我们实验的版本中这个值只进行计算而没有具体意义，所以不赘述。\\
+  \bottomrule
+  \end{tabular}
+  \caption{precision说明\label{tab:precision}}
+\end{table}
+
+另外，还可以使用length来修改数据类型的长度，在C中我们可以使用l、ll、h等，但这里我们只使用l，参看下表\ref{tab:length}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{ccc}
+  \toprule
+  \multirow{2}{*}{length}& \multicolumn{2}{c}{Specifier}\\
+  \cline{2-3}
+  &d D      & b o O u U x X\\
+  \midrule
+  l& long int & unsigned long int\\
+  \bottomrule
+  \end{tabular}
+  \caption{length说明\label{tab:length}}
+\end{table}
 
 \section{实验正确结果}
 如果你正确地实现了前面所要求的全部内容，你将在gxemul中观察到如下输出，这标志着你顺利完成了lab1实验（仍需阅读本章中余下的内容，以便掌握提交代码所需的git技能）。
@@ -813,12 +945,15 @@ Simple setup...
         starting cpu0 at 0x80010000
 -------------------------------------------------------------------------------
 
-main.c:	main is start ...
+main.c: main is start ...
 
-init.c:	mips_init() is called
+init.c: mips_init() is called
 
 panic at init.c:24: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 \end{minted}
 
 \section{实验思考}
+\begin{itemize}
+\item \hyperref[think-endian]{\textbf{\textcolor{baseB}{思考-readelf程序的问题}}}
+\end{itemize}
 
