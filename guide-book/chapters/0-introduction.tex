@@ -144,7 +144,7 @@ $ git checkout lab0
 对于刚接触到命令行界面的各位萌新们来说，因为不清楚基本的Linux命令而呆呆地望着屏幕上的光标，想要做些什么却又不知所措是再正常不过的事。不过不要着急，万事开头难，学会并可以熟练使用下面介绍的一些基本操作之后，相信你们一定会对命令行界面有一个全新的认识，不再一头雾水。
 
 \subsection{Linux基本操作命令}
-通过SSH连接服务器打开Linux命令行界面后，首先会看到光标前的如下内容，其中@符号前的是用户名，@符号后的是计算机名，冒号后为当前所在的文件目录（/表示根目录root；～表示主目录home，其一般等价于/home/<user\_name>），最后的\$或\#分别表示当前用户为普通用户或超级用户root，当然，我们的服务器自然不会让大家知道root的密码的，感兴趣的同学可以自己配置系统娱乐一番
+通过SSH连接服务器打开Linux命令行界面后，首先会看到光标前的如下内容，其中@符号前的是用户名，@符号后的是计算机名，冒号后为当前所在的文件目录（/表示根目录root；～表示主目录home，其一般等价于/home/<user\_name>），最后的\$或\#分别表示当前用户为普通用户或超级用户root。
 
 \begin{minted}[linenos]{bash}
 16xxxxxx@ubuntu:~$
@@ -212,7 +212,7 @@ rm - remove files or directories
 在需要键入文件名/目录名时，可以使用TAB键补足全名，当有多种补足可能时双击TAB键可以显示所有可能选项。
 \end{note}
 
-学会创建目录后，我们就需要进入我们新建的目录中创建和修改文件来完成工作了。使用cd命令来切换工作目录至dirname，其中dirname的表示法可为绝对路径或相对路径。若目录名称省略，则变换至使用者的主目录home (等价于cd ~ )。另外，在Linux文件系统中，"."表示当前所在目录，".."表示当前目录位置的上一层目录，同学们在使用ls –a后看到的目录中的"."和".."即使如此。
+学会创建目录后，我们就需要进入我们新建的目录中创建和修改文件来完成工作了。使用cd命令来切换工作目录至dirname，其中dirname的表示法可为绝对路径或相对路径。若目录名称省略，则变换至使用者的主目录home (等价于cd ~ )。另外，在Linux文件系统中， . 表示当前所在目录， .. 表示当前目录位置的上一层目录，同学们在使用ls –a后看到的目录中的"."和".."即使如此。
 
 \begin{minted}[linenos]{bash}
 cd - change working directory
@@ -241,9 +241,10 @@ cat - concatenate files and print
 		\item echo first
 		\item echo second > output.txt
 		\item echo third > output.txt
-		\item echo forth >> output.txt
+		\item echo forth > > output.txt
 	\end{itemize}
 \end{exercise}
+
 之后就是对于文件的操作：复制和移动。复制命令为cp，命令的第一个参数为源文件路径，命令的第二个参数为目标文件路径。
 
 \begin{minted}[linenos]{bash}
@@ -313,7 +314,9 @@ e.g.
 	\item Ctrl+I	清屏
 \end{itemize}
 
-其中，Ctrl+Z挂起程序后会显示该程序挂起编号，若想要恢复该程序可以使用fg <编号>即可。对其他内容感兴趣的同学可以自行百度或用man命令看帮助手册进行学习和了解。
+其中，Ctrl+Z挂起程序后会显示该程序挂起编号，若想要恢复该程序可以使用fg [job\_spec]即可，job\_spec即为挂起编号，不输入时默认为最近挂起进程。
+
+对其他内容感兴趣的同学可以自行百度或用man命令看帮助手册进行学习和了解。
 
 \begin{note}
 在多数shell中，四个方向键也是有各自特定的功能的：←和→可以控制光标的位置，↑和↓可以切换最近使用过的命令
@@ -900,7 +903,7 @@ Aborting
 \section{实战测试}
 随着lab0学习的结束，下面就要开始通过实战检验水平了，请同学们按照下面的题目要求完成所需操作，最后将工作区push至远端以进行评测，评测完成后会返回lab0课下测试的成绩，通过课下测试(>=60分)即可参加上机时的课上测试。
 \begin{exercise}
-在lab0工作区的src目录中，存在一个名为code.c的文件，使用刚刚学过的工具打开code.c，观察代码你会发现其中的qsort函数是一个简单而标准但似乎并不完整的快速排序算法代码，请你根据自己对这种排序算法的理解，将其补全并另存为qsort.c，使其可以完成排序功能。建立目录，使补全后的qsort.c文件路径为：~/16xxxxxx-lab/dst/result/code/qsort.c。并将其编译为可执行文件qsort，存入路径为：~/16xxxxxx-lab/dst/result/gcc/的目录下。最后，运行该可执行程序，并将程序的输出结果保存至result目录下的output文件中。[注意：文件名和路径必须与题目要求相同]
+在lab0工作区的src目录中，存在一个名为code.c的文件，使用刚刚学过的工具打开code.c，观察代码你会发现其中的qsort函数是一个简单而标准但似乎并不完整的快速排序算法代码，请你根据自己对这种排序算法的理解，将其补全并另存为qsort.c，使其可以完成排序功能。建立目录，使补全后的qsort.c文件路径为：/home/16xxxxxx/16xxxxxx-lab/dst/result/code/qsort.c。并将其编译为可执行文件qsort，存入路径为：/home/16xxxxxx/16xxxxxx-lab/dst/result/gcc/的目录下。最后，运行该可执行程序，并将程序的输出结果保存至result目录下的output文件中。[注意：文件名和路径必须与题目要求相同]
 
 文件目录树应如下图所示：
 \end{exercise}
