@@ -2,12 +2,11 @@
 
 \section{实验目的}
   \begin{enumerate}
-    \item 掌握操作系统实验所需的基本工具
     \item 从操作系统角度理解MIPS体系结构
     \item 掌握操作系统启动的基本流程
+    \item 掌握ELF文件的结构和功能
   \end{enumerate}
 在本章中，我们需要阅读并填写部分代码，使得我们的小操作系统可以正常的运行起来。这一章节的难度较为简单，
-主要是为了让大家熟悉操作系统实验环境中的各类工具，为后续的实验奠定基础。
     
 \section{操作系统的启动}
 
@@ -387,7 +386,7 @@ ELF文件是一种对可执行文件、目标文件和库使用的文件格式�
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=18cm,height=6cm]{lab1-file}
+  \includegraphics[width=16cm,height=2cm]{lab1-file}
   \caption{file命令}\label{fig:lab1-file} 
 \end{figure}
 
@@ -418,12 +417,92 @@ ELF文件是一种对可执行文件、目标文件和库使用的文件格式�
 
 我们已经了解了ELF文件的大体结构，现在，我们需要你自己动手，阅读一个简易的ELF文件的解析程序，然后完成部分代码，来了解ELF文件各个部分的详细结构。
 
+为了简化你的理解过程，我们先对这个程序中涉及的三个关键数据结构做一下简要说明，请你仔细阅读下面的代码和注释，然后完成练习。
+下面的代码都截取自kerelf.h文件
+
+\begin{minted}[linenos]{c}
+
+typedef struct
+{
+  // some identification informtion, including magic number
+  unsigned char e_ident[EI_NIDENT];
+  // file type, including relocatable file, executable file and shared object
+  Elf32_Half e_type;
+  // architecture, like MIPS
+  Elf32_Half e_machine;
+  // version info
+  Elf32_Word e_version;
+  // addr of entry point
+  Elf32_Addr e_entry;
+  // program header table offset
+  Elf32_Off  e_phoff;
+  // section header table offset
+  Elf32_Off  e_shoff;
+  // relating to processor
+  Elf32_Half e_flags;
+  // elf header size
+  Elf32_Half e_ehsize;
+  // program header entry size
+  Elf32_Half e_phentsize;
+  // program header entry number
+  Elf32_Half e_phnum;
+  // section header entry size
+  Elf32_Half e_shentsize;
+  // section header entry number
+  Elf32_Half e_shnum;
+}Elf32_Ehdr;
+
+typedef struct
+{
+  // section name
+  Elf32_Word sh_name;
+  // section type
+  Elf32_Word sh_type;
+  // section flags
+  Elf32_Word sh_flags;
+  // section addr
+  Elf32_Addr sh_addr;
+  // offset from elf head of this entry
+  Elf32_Off  sh_offset;
+  // byte size of this section
+  Elf32_Word sh_size;
+  // link
+  Elf32_Word sh_link;
+  // extra info
+  Elf32_Word sh_info;
+  // alignment
+  Elf32_Word sh_addralign;
+  // entry size
+  Elf32_Word sh_entsize;
+}Elf32_Shdr;
+
+typedef struct
+{
+  // segment type
+  Elf32_Word p_type;
+  // offset from elf file head of this entry
+  Elf32_Off  p_offset;
+  // virtual addr of this segment
+  Elf32_Addr p_vaddr;
+  // physical addr, in linux, this value is meanless and has same value of p_vaddr
+  Elf32_Addr p_paddr;
+  // file size of this segment
+  Elf32_Word p_filesz;
+  // memory size of this segment
+  Elf32_Word p_memsz;
+  // segment flag
+  Elf32_Word p_flags;
+  // alignment
+  Elf32_Word p_align;
+}Elf32_Phdr;
+\end{minted}
+
 \begin{exercise}
 阅读kerelf.h、readelf.c以及main.c三个文件中的代码，并完成readelf.c中缺少的代码，使得main.c程序可以正确编译和输出。
 \end{exercise}
 
 \begin{thinking}\label{think-endian}
-也许你会发现我们的readelf程序是不能解析之前生成的内核文件(内核文件是可执行文件)的，这是为什么呢？我们把这个问题留给你来思考。
+也许你会发现我们的readelf程序是不能解析之前生成的内核文件(内核文件是可执行文件)的，而我们之后将要介绍的工具readelf则可以解析，这是为什么呢？(提示：尝试使用readelf -h，观察不同)
 \end{thinking}
 
 通过刚才的练习，相信你已经对ELF文件有了一个比较充分的了解，你可能想进一步解析ELF文件来获得更多的信息，不过这个工作已经有人帮你做了，使用readelf工具，你就可以很方便地解析ELF文件。
@@ -434,6 +513,7 @@ ELF文件是一种对可执行文件、目标文件和库使用的文件格式�
 主要是连接器在连接的过程中需要使用。而segment则记录了每一段数据（包括代码等内容）需要被载入到哪里，记录了用于指导应用程序加载的各类信息。
 
 我们不妨来看一下，我们之前那个hello world程序的各个segment长什么样子。readelf工具可以方便地解析出elf文件的内容，这里我们使用它来分析我们的程序。
+首先我们使用-l参数来查看各个segment的信息。
 
 \begin{minted}[linenos]{objdump}
 Elf 文件类型为 EXEC (可执行文件)
@@ -904,7 +984,7 @@ void printf(const char* fmt, ...)
   \toprule
   .precision& \multicolumn{1}{c}{描述}\\
   \midrule
-  .数字& 指定了精度，不同标识符下右不同的意义，但在我们实验的版本中这个值只进行计算而没有具体意义，所以不赘述。\\
+  .数字& 指定了精度，不同标识符下有不同的意义，但在我们实验的版本中这个值只进行计算而没有具体意义，所以不赘述。\\
   \bottomrule
   \end{tabular}
   \caption{precision说明\label{tab:precision}}
@@ -927,7 +1007,7 @@ void printf(const char* fmt, ...)
 \end{table}
 
 \section{实验正确结果}
-如果你正确地实现了前面所要求的全部内容，你将在gxemul中观察到如下输出，这标志着你顺利完成了lab1实验（仍需阅读本章中余下的内容，以便掌握提交代码所需的git技能）。
+如果你正确地实现了前面所要求的全部内容，你将在gxemul中观察到如下输出，这标志着你顺利完成了lab1实验。
 
 \begin{minted}[linenos]{text}
 GXemul 0.4.6    Copyright (C) 2003-2007  Anders Gavare
