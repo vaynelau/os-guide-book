@@ -415,7 +415,7 @@ ELF文件是一种对可执行文件、目标文件和库使用的文件格式�
     \item 组成可执行文件或者可共享文件，在运行时为加载器提供信息。
   \end{enumerate}
 
-我们已经了解了ELF文件的大体结构，现在，我们需要你自己动手，阅读一个简易的ELF文件的解析程序，然后完成部分代码，来了解ELF文件各个部分的详细结构。
+我们已经了解了ELF文件的大体结构，现在，我们需要你自己动手，阅读一个简易的对32bitELF文件的解析程序，然后完成部分代码，来了解ELF文件各个部分的详细结构。
 
 为了简化你的理解过程，我们先对这个程序中涉及的三个关键数据结构做一下简要说明，请你仔细阅读下面的代码和注释，然后完成练习。
 下面的代码都截取自./readelf/kerelf.h文件
@@ -498,7 +498,7 @@ typedef struct
 \end{minted}
 
 \begin{exercise}
-阅读./readelf文件夹中kerelf.h、readelf.c以及main.c三个文件中的代码，并完成readelf.c中缺少的代码，使得main.c程序可以正确编译和输出。
+阅读./readelf文件夹中kerelf.h、readelf.c以及main.c三个文件中的代码，并完成readelf.c中缺少的代码，readelf函数需要输出elf文件的所有section header的序号和地址信息，对每个section header，输出格式为"%d:0x%x\n"。
 \end{exercise}
 
 \begin{thinking}\label{think-endian}
