@@ -126,7 +126,7 @@ $ git clone git@ip:id-lab
 接下来系统会提示如下内容
 \begin{minted}[linenos]{bash}
 Cloning into '16xxxxxx-lab'...
-Enter passphrase for key '/home/16xxxxxx/.ssh/id_rsa':
+Enter passphrase for key '/home/16xxxxxx_2018_jac/.ssh/id_rsa':
 \end{minted}
 
 这里让你输入你的rsa密钥，也就是每个人的学号。
@@ -153,7 +153,7 @@ $ git checkout lab0
 通过SSH连接服务器打开Linux命令行界面后，首先会看到光标前的如下内容，其中@符号前的是用户名，@符号后的是计算机名，冒号后为当前所在的文件目录（/表示根目录root；～表示主目录home，其一般等价于/home/<user\_name>），最后的\$或\#分别表示当前用户为普通用户或超级用户root。
 
 \begin{minted}[linenos]{bash}
-16xxxxxx@ubuntu:~$
+16xxxxxx_2018_jac@ubuntu:~$
 \end{minted}
 \begin{minted}[linenos]{bash}
 root@ubuntu:~#
@@ -162,8 +162,8 @@ root@ubuntu:~#
 现在通过键盘输入命令，按回车后即可执行。首先，我们需要更改自己的用户密码，使用passwd命令即可更改当前用户的密码，注意：输入密码时不会在屏幕上显示密码内容（若输入过程中手抖打错，可重复多按几次退格键清空之前的输入后重新输入）。
 
 \begin{minted}[linenos]{bash}
-16xxxxxx@ubuntu:~$ passwd
-更改16xxxxxx的密码。
+16xxxxxx_2018_jac@ubuntu:~$ passwd
+更改16xxxxxx_2018_jac的密码。
 （当前）UNIX密码：
 输入新的UNIX密码：
 重新输入新的UNIX密码：
@@ -518,7 +518,7 @@ Run
 
 \begin{exercise}
 \begin{itemize}
-    \item 在/home/16xxxxxx/learnGit（已init）目录下创建一个名为README.txt的文件。这时使用 git status > Untracked.txt 。
+    \item 在/home/16xxxxxx_2018_jac/learnGit（已init）目录下创建一个名为README.txt的文件。这时使用 git status > Untracked.txt 。
 	\item 在 README.txt 文件中随便写点什么，然后使用刚刚学到的 add 命令，再使用 git status > Stage.txt 。
 	\item 之后使用上面学到的 Git 提交有关的知识把 README.txt 提交，并在提交说明里写入自己的学号。
 	\item 使用 cat Untracked.txt 和 cat Stage.txt，对比一下两次的结果，体会一下README.txt 两次所处位置的不同。
@@ -661,7 +661,7 @@ Git 中引入的\textbf{暂存区}的概念可以说是 Git 里最难理解但�
 \begin{exercise}
 	
 	\begin{itemize}
-		\item 找到我们在/home/16xxxxxx/下刚刚创建的README.txt，没有的话就新建一个。
+		\item 找到我们在/home/16xxxxxx_2018_jac/下刚刚创建的README.txt，没有的话就新建一个。
 		\item 在文件里加入\textbf{Testing 1}，add，commit，提交说明写 1。
 		\item 模仿上述做法，把1分别改为 2 和 3，再提交两次。
 		\item 使用 git log命令查看一下提交日志，看是否已经有三次提交了？记下提交说明为 3 的哈希值\footnote{使用git log命令时，在commit 标识符后的一长串数字和字母组成的字符串}。
@@ -879,7 +879,7 @@ Aborting
 \begin{exercise}
 仔细回顾一下上面这些指令，然后完成下面的任务
   \begin{itemize}
-    \item 在 /home/16xxxxxx/16xxxxxx-lab下新建分支，名字为Test
+    \item 在 /home/16xxxxxx_2018_jac/16xxxxxx-lab下新建分支，名字为Test
     \item 切换到Test分支，添加一份readme.txt，内容写入自己的学号
     \item 将文件提交到本地版本库，然后建立相应的远程分支。
   \end{itemize}
@@ -918,11 +918,11 @@ Aborting
 
 建立目录，使补全后的qsort.c文件路径为：
 
-/home/16xxxxxx/16xxxxxx-lab/dst/result/code/qsort.c。
+/home/16xxxxxx_2018_jac/16xxxxxx-lab/dst/result/code/qsort.c。
 
 并将其编译为可执行文件qsort，存入路径为：
 
-/home/16xxxxxx/16xxxxxx-lab/dst/result/qsort
+/home/16xxxxxx_2018_jac/16xxxxxx-lab/dst/result/qsort
 
 \textbf{[注意：文件名和路径必须与题目要求相同]}
 
