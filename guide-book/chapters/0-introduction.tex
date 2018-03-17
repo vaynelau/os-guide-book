@@ -1,4 +1,4 @@
-﻿\chapter{初识操作系统}
+\chapter{初识操作系统}
 
 \section{实验目的}
   \begin{enumerate}
@@ -14,11 +14,14 @@
 
 \subsection{了解实验环境}
 实验环境整体配置如下：
-	操作系统：Linux虚拟机，Ubuntu 12.04.5 LTS
-	硬件模拟器：Gxemul
-	编译器：GCC
-	版本控制：Git
-Ubuntu，版本号为12.04.5 LTS。Ubuntu是一款开源的GNU/Linux操作系统，基于Linux内核实现，是目前较为流行的几个Linux发行版之一。GNU （GNU is Not Unix的递归缩写），是一套计划，其中包含了三个协议条款，为我们带来了大量开源软件；Linux：严格意义上指代Linux内核，基于该内核的操作系统众多，具有免费、可靠、安全、稳定、多平台等特点。
+\begin{itemize}
+    \item 操作系统：Linux虚拟机，Ubuntu
+    \item 硬件模拟器：Gxemul
+    \item 编译器：GCC
+    \item 版本控制：Git
+ \end{itemize}
+	
+Ubuntu操作系统，一款开源的GNU/Linux操作系统，基于Linux内核实现，是目前较为流行的几个Linux发行版之一。GNU （GNU is Not Unix的递归缩写），是一套计划，其中包含了三个协议条款，为我们带来了大量开源软件；Linux：严格意义上指代Linux内核，基于该内核的操作系统众多，具有免费、可靠、安全、稳定、多平台等特点。
 
 GXemul，一款计算机架构仿真器，可以模拟所需硬件环境，例如我们需要的MIPS架构下的CPU。
 
@@ -36,7 +39,7 @@ Git，一款免费、开源的版本控制系统，我们的实验将用它为�
 
 熟悉了实验环境之后，我们不禁产生了疑问：难道这些环境全部需要我们自行安装和配置？这里为大家带来另一个好消息：当然不是，这些环境已经为你们配置好了！
 
-本实验总计7个Lab完全依赖于远程的一台虚拟机上，最终成果也需要通过这台机器进行提交，所以同学们几乎不用担心个人电脑“带不动”实验环境，你需要的仅仅是一个能够支持ssh协议的远程连接工具。
+本实验总计7个Lab完全依赖于远程的数台虚拟机上，最终成果也需要通过这些机器进行提交，所以同学们几乎不用担心个人电脑“带不动”实验环境，你需要的仅仅是一个能够支持ssh协议的远程连接工具。
 
 一般Liunx或Mac OS等类Unix操作系统都会附带ssh客户端，即直接在终端使用ssh命令便可，Windows平台一般不自带ssh，需要下载第三方软件，在这里建议大家使用一款轻量级的，开源的，名为PuTTY的小工具，当然也不乏各种功能强大的工具，接触过git for Windows或对Windows 10有所研究的同学亦可使用git bash的以及Windows 10的几款Linux子系统。
 
@@ -91,7 +94,9 @@ SSH是Secure Shell的缩写。它是一种用于建立安全的远程连接的�
 
 当然上文的描述是不严谨的，你所面对的并不是真正的“Ubuntu操作系统”，而是它的“壳”。一般的，我们管操作系统核心部分称为内核（英文：Kernel），与其相对的就是它最外层的壳（英文：Shell）。Shell是用于访问操作系统服务的用户界面。一般而言，操作系统shell使用命令行界面（CLI）或图形用户界面（GUI），这个纯文本的界面就是命令行界面，它能接收你发送的命令，如果命令存在于环境中，它便会为你提供相应的功能。
 
-在Ubuntu中，我们默认使用的CLI shell是bash，也是一款基于GNU的免费、开源软件，那么接下来我们小试牛刀。
+在Ubuntu中，我们默认使用的CLI shell是bash，也是一款基于GNU的免费、开源软件。
+
+那么接下来我们小试牛刀。
 
 \begin{exercise}
 在bash中分别输入
@@ -113,25 +118,29 @@ SSH是Secure Shell的缩写。它是一种用于建立安全的远程连接的�
 
 当我们登陆了课程实验环境后，就要准备开始我们的实验了，好奇的你可能会问：环境有了，工具有了，我们在哪里完成实验呢？
 
-我们在ip服务器上为所有同学部署了实验的远程仓库，接下来我们要先进行一条命令来获取我们的实验包。
+我们在服务器上为所有同学部署了实验的远程仓库，服务器的ip地址会在课上公布，接下来我们要先进行一条命令来获取我们的实验包。
 \begin{minted}[linenos]{bash}
 $ git clone git@ip:id-lab
 \end{minted}
+
 接下来系统会提示如下内容
 \begin{minted}[linenos]{bash}
 Cloning into '16xxxxxx-lab'...
-Enter passphrase for key '/home/16xxxxxx/.ssh/id_rsa':
+Enter passphrase for key '/home/16xxxxxx\_2018\_jac/.ssh/id_rsa':
 \end{minted}
+
 这里让你输入你的rsa密钥，也就是每个人的学号。
 
 执行之后若输入ls，你会发现你的主目录下多了一个id-lab，输入如下命令访问它
 \begin{minted}[linenos]{bash}
 $ cd id-lab
 \end{minted}
+
 再使用ls会发现里面空空如也，不用着急，接下来需要再执行一条命令
 \begin{minted}[linenos]{bash}
 $ git checkout lab0
 \end{minted}
+
 这样我们就进入Lab0工作区了，也许你现在对上面的几条命令的功能不太了解，没关系，本章的后续内容会为你介绍它们。
 
 \section{基础操作介绍}
@@ -141,10 +150,10 @@ $ git checkout lab0
 对于刚接触到命令行界面的各位萌新们来说，因为不清楚基本的Linux命令而呆呆地望着屏幕上的光标，想要做些什么却又不知所措是再正常不过的事。不过不要着急，万事开头难，学会并可以熟练使用下面介绍的一些基本操作之后，相信你们一定会对命令行界面有一个全新的认识，不再一头雾水。
 
 \subsection{Linux基本操作命令}
-通过SSH连接服务器打开Linux命令行界面后，首先会看到光标前的如下内容，其中@符号前的是用户名，@符号后的是计算机名，冒号后为当前所在的文件目录（/表示根目录root；～表示主目录home，其一般等价于/home/<user\_name>），最后的\$或\#分别表示当前用户为普通用户或超级用户root，当然，我们的服务器自然不会让大家知道root的密码的，感兴趣的同学可以自己配置系统娱乐一番
+通过SSH连接服务器打开Linux命令行界面后，首先会看到光标前的如下内容，其中@符号前的是用户名，@符号后的是计算机名，冒号后为当前所在的文件目录（/表示根目录root；～表示主目录home，其一般等价于/home/<user\_name>），最后的\$或\#分别表示当前用户为普通用户或超级用户root。
 
 \begin{minted}[linenos]{bash}
-16xxxxxx@ubuntu:~$
+16xxxxxx\_2018\_jac@ubuntu:~$
 \end{minted}
 \begin{minted}[linenos]{bash}
 root@ubuntu:~#
@@ -153,8 +162,8 @@ root@ubuntu:~#
 现在通过键盘输入命令，按回车后即可执行。首先，我们需要更改自己的用户密码，使用passwd命令即可更改当前用户的密码，注意：输入密码时不会在屏幕上显示密码内容（若输入过程中手抖打错，可重复多按几次退格键清空之前的输入后重新输入）。
 
 \begin{minted}[linenos]{bash}
-16xxxxxx@ubuntu:~$ passwd
-更改16xxxxxx的密码。
+16xxxxxx\_2018\_jac@ubuntu:~$ passwd
+更改16xxxxxx\_2018\_jac的密码。
 （当前）UNIX密码：
 输入新的UNIX密码：
 重新输入新的UNIX密码：
@@ -209,7 +218,7 @@ rm - remove files or directories
 在需要键入文件名/目录名时，可以使用TAB键补足全名，当有多种补足可能时双击TAB键可以显示所有可能选项。
 \end{note}
 
-学会创建目录后，我们就需要进入我们新建的目录中创建和修改文件来完成工作了。使用cd命令来切换工作目录至dirname，其中dirname的表示法可为绝对路径或相对路径。若目录名称省略，则变换至使用者的主目录home (等价于cd ~ )。另外，在Linux文件系统中，"."表示当前所在目录，".."表示当前目录位置的上一层目录，同学们在使用ls –a后看到的目录中的"."和".."即使如此。
+学会创建目录后，我们就需要进入我们新建的目录中创建和修改文件来完成工作了。使用cd命令来切换工作目录至dirname，其中dirname的表示法可为绝对路径或相对路径。若目录名称省略，则变换至使用者的主目录home (等价于cd ~ )。另外，在Linux文件系统中， . 表示当前所在目录， .. 表示当前目录位置的上一层目录，同学们在使用ls –a后看到的目录中的 . 和 .. 即是如此。
 
 \begin{minted}[linenos]{bash}
 cd - change working directory
@@ -219,9 +228,9 @@ e.g.
 		cd ..	变更至父目录
 \end{minted}
 
-现在，进入新建的目录中后依旧空空如也，那么我们就来创建几个文件玩玩~创建文件的方法有很多，可以直接使用重定向输出>filename来新建一个空文件，也可以使用文本编辑工具vim或nano等新建文件后保存（使用命令vim filename或nano filename，编辑工具的使用方法将在0.4节介绍），因为打开后可以直接进行编辑后保存，所以笔者更喜欢用后者新建文件。现在可能有人要问了，重定向输出是什么意思？大于号是什么意思？重定向输出就是使用>来改变送出的数据信道，使>前命令的输出数据输出到>后指定的文件中去。例如：ls / > filename 可以将根目录下的文件名输出至当前目录下的filename文件中。与之类似的，还有重定向追加输出>>，将>>前命令的输出数据追加输出到>>后指定的文件中去；以及重定向输入<，将<后指定的文件中的数据输入到<前的命令中，同学们可以自己动手实践一下。
+现在，进入新建的目录中后依旧空空如也，那么我们就来创建几个文件玩玩~创建文件的方法有很多，可以直接使用重定向输出\verb|>|filename来新建一个空文件，也可以使用文本编辑工具vim或nano等新建文件后保存（使用命令vim filename或nano filename，编辑工具的使用方法将在0.4节介绍），因为打开后可以直接进行编辑后保存，所以笔者更喜欢用后者新建文件。现在可能有人要问了，重定向输出是什么意思？大于号是什么意思？重定向输出就是使用\verb|>|来改变送出的数据信道，使\verb|>|前命令的输出数据输出到\verb|>|后指定的文件中去。例如：ls / \verb|>| filename 可以将根目录下的文件名输出至当前目录下的filename文件中。与之类似的，还有重定向追加输出\verb|>>|，将\verb|>>|前命令的输出数据追加输出到\verb|>>|后指定的文件中去；以及重定向输入\verb|<|，将\verb|<|后指定的文件中的数据输入到\verb|<|前的命令中，同学们可以自己动手实践一下。
 
-在此顺带一提echo命令，echo命令用于在Shell中打印Shell变量的值，或者直接输出指定的字符串。简单来说，就是将echo命令中的参数输出到屏幕上显示。那么将echo命令和重定向相结合会产生什么样的效果呢？这就留给大家自己去尝试吧~
+在此顺带一提echo命令，echo命令用于在Shell中打印Shell变量的值，或者直接输出指定的字符串。简单来说，就是将echo命令中的参数输出到屏幕上显示。那么将echo命令和重定向相结合会产生什么样的效果呢？这就留给大家自己去尝试吧\verb|~|
 
 好了，现在我们已经创建了新的文件，那么想要查看文件内容要怎么办呢？除了前面说到的编辑工具以外，还有一种简单快速查看文件内容的方法——cat命令。使用cat filename即可将文件内容输出到屏幕上显示，若要显示行数，添加-n选项即可。
 
@@ -236,11 +245,12 @@ cat - concatenate files and print
 	执行如下命令,并查看结果
 	\begin{itemize}
 		\item echo first
-		\item echo second > output.txt
-		\item echo third > output.txt
-		\item echo forth >> output.txt
+		\item echo second \verb|>| output.txt
+		\item echo third \verb|>| output.txt
+		\item echo forth \verb|>>| output.txt
 	\end{itemize}
 \end{exercise}
+
 之后就是对于文件的操作：复制和移动。复制命令为cp，命令的第一个参数为源文件路径，命令的第二个参数为目标文件路径。
 
 \begin{minted}[linenos]{bash}
@@ -310,7 +320,9 @@ e.g.
 	\item Ctrl+I	清屏
 \end{itemize}
 
-其中，Ctrl+Z挂起程序后会显示该程序挂起编号，若想要恢复该程序可以使用fg <编号>即可。对其他内容感兴趣的同学可以自行百度或用man命令看帮助手册进行学习和了解。
+其中，Ctrl+Z挂起程序后会显示该程序挂起编号，若想要恢复该程序可以使用fg [job\_spec]即可，job\_spec即为挂起编号，不输入时默认为最近挂起进程。
+
+对其他内容感兴趣的同学可以自行百度或用man命令看帮助手册进行学习和了解。
 
 \begin{note}
 在多数shell中，四个方向键也是有各自特定的功能的：←和→可以控制光标的位置，↑和↓可以切换最近使用过的命令
@@ -328,7 +340,7 @@ e.g.
 \end{figure}
 
 \subsection{Vim}
-Vim被誉为编辑器之神，是程序员为程序员设计的编辑器，编辑效率高，十分适合编辑代码，其界面如下图\ref{fig:0-21}所示。对于习惯了图形化界面文本编辑软件的同学们来说，刚接触Vim时一定会觉得非常不习惯非常不顺手，所以在这里给大家总结了一些常用的基本操作以助入门。同时，推荐给大家一篇质量极高的Vim教程——《简明Vim练级攻略》(\url{http://coolshell.cn/articles/5426.html/})，只需要十多分钟的阅读，你就可以掌握 Vim的所有基本操作。当然，想要完全掌握它需要相当长的时间去练习，而如果你只想把Vim当成记事本用的话，几分钟的学习足矣。其他的内容网上有太多太多的资料，随用随查即可。
+Vim被誉为编辑器之神，是程序员为程序员设计的编辑器，编辑效率高，十分适合编辑代码，其界面如下图所示。对于习惯了图形化界面文本编辑软件的同学们来说，刚接触Vim时一定会觉得非常不习惯非常不顺手，所以在这里给大家总结了一些常用的基本操作以助入门。同时，推荐给大家一篇质量极高的Vim教程——《简明Vim练级攻略》(\url{http://coolshell.cn/articles/5426.html/})，只需要十多分钟的阅读，你就可以掌握 Vim的所有基本操作。当然，想要完全掌握它需要相当长的时间去练习，而如果你只想把Vim当成记事本用的话，几分钟的学习足矣。其他的内容网上有太多太多的资料，随用随查即可。
 
 \begin{figure}[htbp]
   \centering
@@ -337,7 +349,7 @@ Vim被誉为编辑器之神，是程序员为程序员设计的编辑器，编�
 \end{figure}
 
 \subsection{GCC}
-在没有IDE的情况下，使用GCC编译器是一种简单快捷生成可执行文件的途径，只需一行命令即可将C源文件编译成可执行文件。其常用的使用方法如下图\ref{fig:0-22}所示，同学们可以自己动手实践，写一些简单的C代码来编译运行。如果想要同时编译多个文件，可以直接用-o选项将多个文件进行编译连接：gcc testfun.c test.c -o test ，也可以先使用-c选项将每个文件单独编译成.o文件，再用-o选项将多个.o文件进行连接：gcc -c testfun.c -> gcc -c test.c -> gcc testfun.o test.o -o test ，两者等价。
+在没有IDE的情况下，使用GCC编译器是一种简单快捷生成可执行文件的途径，只需一行命令即可将C源文件编译成可执行文件。其常用的使用方法如下图所示，同学们可以自己动手实践，写一些简单的C代码来编译运行。如果想要同时编译多个文件，可以直接用-o选项将多个文件进行编译连接：gcc testfun.c test.c -o test ，也可以先使用-c选项将每个文件单独编译成.o文件，再用-o选项将多个.o文件进行连接：gcc -c testfun.c -> gcc -c test.c -> gcc testfun.o test.o -o test ，两者等价。
 
 \begin{minted}[linenos]{bash}
 语法:gcc [选项]... [参数]...
@@ -383,11 +395,12 @@ $ gcc test.c -o test
 	\item 最好能像时光机一样穿越回以前，而且不但能穿越回去，还能在不满意的时候穿越回来！
 	\item 如果想查看某次改动，只需要在软件里瞄一眼就可以。
 \end{itemize}
-那岂不是美滋滋~
+
+那岂不是美滋滋\verb|~|
 
 版本控制系统就是这样一种神器的系统。而 Git，则是目前世界上最先进的分布式版本控制系统，没有之一。
 
-Git是由Linux的缔造者Linus Torvalds创造，最开始也是用于管理自己的Linux开发过程。他对于Git的解释是：The stupid content tracker,傻瓜内容追踪器。Git一次本身也是个俚语，大概表示“混帐”。
+Git是由Linux的缔造者Linus Torvalds创造，最开始也是用于管理自己的Linux开发过程。他对于Git的解释是：The stupid content tracker,傻瓜内容追踪器。Git一词本身也是个俚语，大概表示“混帐”。
 
 \begin{note}
 版本控制是一种记录若干文件内容变化, 以便将来查阅特定版本修订情况的系统。
@@ -410,8 +423,10 @@ Git是由Linux的缔造者Linus Torvalds创造，最开始也是用于管理自�
 \begin{note}
 在我们的小操作系统实验中我们不需要使用到 git init 命令，每个人一开始就都有一个名为 16xxxxxx-lab 的版本库，包含了 lab0 的实验内容。
 \end{note}
+
 既然工作区里空荡荡的，那我们来为他加点料：
 用你已知的方法在工作区中建立一个readme.txt，内容为“BUAA\_OSLAB”
+
 当然这只是创建了一个文件而已，下面我们要将它添加至版本库，执行如下内容
 \begin{minted}[linenos]{bash}
 $ git add readme.txt
@@ -497,16 +512,18 @@ Run
   git config -{}-global user.name “Qian”
 \end{note}
 
-现在你已设置了提交者的信息，那么做一下这个小练习来快速上手 Git 的使用吧。
+现在你已设置了提交者的信息，提交者信息是为了告知所有负责该项目的人每次提交是由谁提交的，并提供联系方式以进行交流
+
+那么做一下这个小练习来快速上手 Git 的使用吧。
 
 \begin{exercise}
 \begin{itemize}
-    \item 在/home/16xxxxxx/learnGit（已init）目录下创建一个名为README.txt的文件。这时使用 git status > Untracked.txt 。
+    \item 在/home/16xxxxxx\_2018\_jac/learnGit（已init）目录下创建一个名为README.txt的文件。这时使用 git status > Untracked.txt 。
 	\item 在 README.txt 文件中随便写点什么，然后使用刚刚学到的 add 命令，再使用 git status > Stage.txt 。
 	\item 之后使用上面学到的 Git 提交有关的知识把 README.txt 提交，并在提交说明里写入自己的学号。
 	\item 使用 cat Untracked.txt 和 cat Stage.txt，对比一下两次的结果，体会一下README.txt 两次所处位置的不同。
 	\item 修改 README.txt 文件，再使用 git status > Modified.txt 。
-	\item 使用 cat Modified.txt ，观察它和第一次 add 之前的 status 一样吗，思考一 下为什么？
+	\item 使用 cat Modified.txt ，观察它和第一次 add 之前的 status 一样吗，思考一下为什么？
 \end{itemize}
 \end{exercise}
 
@@ -644,7 +661,7 @@ Git 中引入的\textbf{暂存区}的概念可以说是 Git 里最难理解但�
 \begin{exercise}
 	
 	\begin{itemize}
-		\item 找到我们在/home/16xxxxxx/下刚刚创建的README.txt，没有的话就新建一个。
+		\item 找到我们在/home/16xxxxxx\_2018\_jac/下刚刚创建的README.txt，没有的话就新建一个。
 		\item 在文件里加入\textbf{Testing 1}，add，commit，提交说明写 1。
 		\item 模仿上述做法，把1分别改为 2 和 3，再提交两次。
 		\item 使用 git log命令查看一下提交日志，看是否已经有三次提交了？记下提交说明为 3 的哈希值\footnote{使用git log命令时，在commit 标识符后的一长串数字和字母组成的字符串}。
@@ -862,7 +879,7 @@ Aborting
 \begin{exercise}
 仔细回顾一下上面这些指令，然后完成下面的任务
   \begin{itemize}
-    \item 在 /home/16xxxxxx/16xxxxxx-lab下新建分支，名字为Test
+    \item 在 /home/16xxxxxx\_2018\_jac/16xxxxxx-lab下新建分支，名字为Test
     \item 切换到Test分支，添加一份readme.txt，内容写入自己的学号
     \item 将文件提交到本地版本库，然后建立相应的远程分支。
   \end{itemize}
@@ -897,8 +914,19 @@ Aborting
 \section{实战测试}
 随着lab0学习的结束，下面就要开始通过实战检验水平了，请同学们按照下面的题目要求完成所需操作，最后将工作区push至远端以进行评测，评测完成后会返回lab0课下测试的成绩，通过课下测试(>=60分)即可参加上机时的课上测试。
 \begin{exercise}
-在lab0工作区的src目录中，存在一个名为code.c的文件，使用刚刚学过的工具打开code.c，观察代码你会发现其中的qsort函数是一个简单而标准但似乎并不完整的快速排序算法代码，请你根据自己对这种排序算法的理解，将其补全并另存为qsort.c，使其可以完成排序功能。建立目录，使补全后的qsort.c文件路径为：~/16xxxxxx-lab/dst/result/code/qsort.c。并将其编译为可执行文件qsort，存入路径为：~/16xxxxxx-lab/dst/result/gcc/的目录下。[注意文件名和路径必须与题目要求相同]
-文件目录树如下图所示：
+在lab0工作区的src目录中，存在一个名为code.c的文件，使用刚刚学过的工具打开code.c，观察代码你会发现其中的qsort函数是一个简单而标准但似乎并不完整的快速排序算法代码，请你根据自己对这种排序算法的理解，将其补全并另存为qsort.c，使其可以完成排序功能并输出排序后的数字序列（以空格分隔）。
+
+建立目录，使补全后的qsort.c文件路径为：
+
+/home/16xxxxxx\_2018\_jac/16xxxxxx-lab/dst/result/code/qsort.c。
+
+并将其编译为可执行文件qsort，存入路径为：
+
+/home/16xxxxxx\_2018\_jac/16xxxxxx-lab/dst/result/qsort
+
+\textbf{[注意：文件名和路径必须与题目要求相同]}
+
+文件目录树应如下图所示：
 \end{exercise}
 \begin{figure}[htbp]
   \centering
