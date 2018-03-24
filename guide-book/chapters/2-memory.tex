@@ -238,10 +238,23 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 
 \begin{exercise}
 完成 mm/pmap.c 中的 page\_alloc 和 page\_free 函数，基于空闲内存链表 page\_free\_list ，以页
-为单位进行物理内存的管理。
+	为单位进行物理内存的管理。并在init/init.c的函数mips\_init中注释掉page\_check();。此时运行结果如下。
 \end{exercise}
 
-至此，我们的内核已经能够按照分页的方式对物理内存进行管理。
+\begin{minted}[linenos]{c}
+main.c: main is start ...
+init.c: mips_init() is called
+Physical memory: 65536K available, base = 65536K, extended = 0K
+to memory 80401000 for struct page directory.
+to memory 80431000 for struct Pages.
+pmap.c:  mips vm init success
+*temp is 1000
+phycial_memory_manage_check() succeeded
+panic at init.c:17: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+\end{minted}
+
+
+至此，我们的内核已经能够按照分页的方式对物理内存进行管理,
 
 \section{虚拟内存管理}
 
@@ -499,7 +512,7 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
   另外，还可以提醒大家的是，在gxemul中，有tlbdump这个命令，可以随时查看tlb中的内容。
 \section{正确结果展示}
 
-实验二做完之后，正确的结果应该是这样的：
+实验二做完之后，在init/init.c的函数mips\_init中，将page\_check还原，并注释掉physical\_memory\_manage\_check();。运行的正确结果应该是这样的：
 
 \begin{minted}[linenos]{c}
 main.c: main is start ...
@@ -518,7 +531,7 @@ page_check() succeeded!
 panic at init.c:55: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 \end{minted}
 
-最后一行的数字 \textbf{55} 是不固定的。
+地址\textbf{3ffe000}和最后一行的数字 \textbf{55} 是不固定的。
 
 \section{实验思考}
 
