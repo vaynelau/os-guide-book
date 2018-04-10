@@ -5,13 +5,15 @@
     \item 掌握系统调用的概念及流程
     \item 实现进程间通讯机制
     \item 实现fork函数
+    \item 掌握缺页中断的处理流程
   \end{enumerate}
 
-在系统中真正被所有进程都使用的内核通信方式是系统调用，例如当进程请求内核服务时，就使用的是系统调用。
-一般情况下，进程是不能够存取系统内核的，它不能存取内核使用的内存段，也不能调用内核函数，
-CPU的硬件结构保证了这一点，只有系统调用是一个例外。
-进程使用寄存器中适当的值跳转到内核中事先定义好的代码中执行（当然，这些代码是只读的）。
-在这一节的实验中，我们需要实现系统调用机制，并再此基础上实现进程间通信（ipc）机制和fork。
+一般情况下，进程不能够存取系统内核的地址空间，也就是说它不能存取内核使用的内存数据，也不能调用内核函数，
+这一点是由CPU的硬件结构保证的。然而，用户进程在特定的场景下是需要进行一些只能在内核中执行的操作，如
+对硬件的操作。这种时候允许内核执行用户提供的代码显然是不安全的，所以操作系统也就设计了一系列内核空间
+的函数，当用户进程以特定的方式陷入异常后，能够由内核调用对应的函数，我们把这些函数称为\textbf{系统调用}。
+在这一节的实验中，我们需要实现系统调用机制，并再此基础上实现进程间通信（IPC）机制和一个重要的系统调用fork。
+在fork的实验中，我们会介绍一种被称为写时复制的特性，而与这种特性相关的正是内核的缺页中断处理机制。
 
 \section{系统调用(System Call)}
 本节中，我们着重讨论系统调用的作用，并完成实现相关的内容。
@@ -95,7 +97,7 @@ End of assembler dump.
   \item write函数设置了为寄存器设置了相应的值，并执行了syscall指令。
   \item 进入内核态，内核中相应的函数或服务被执行。
   \item 回到用户态的write函数中，将系统调用的结果从相关的寄存器中取回，并返回。
-  \item 再次经过一系列的返回过程后，回到了puts函数中。
+  \item 再次经过一系列的返回过程后，回到了puts函数中。
   \item puts函数返回。
 \end{enumerate}
 
@@ -106,61 +108,86 @@ End of assembler dump.
 实现更多更高级的常用功能，使得用户在编写程序时不用再处理这些繁琐而复杂的底层操作，
 而是直接通过调用高层次的API就能实现各种功能。通过这样巧妙的层次划分，使得程序更为灵活，也具有了更好的可移植性。
 对于用户程序来说，只要自己所依赖的API不变，无论底层的系统调用如何变化，都不会对自己造成影响，
-使得程序更易于在不同的系统间移植。整个结构如图\ref{fig:api-and-syscall}所示。
+使得程序更易于在不同的系统间移植。整个结构如表\ref{fig:api-and-syscall}所示。
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=7cm]{api-and-syscall}
-  \caption{API、系统调用层次结构}\label{fig:api-and-syscall}
-\end{figure}
+\begin{table}[htbp]
+\centering
+\caption{API、系统调用层次结构}
+\label{fig:api-and-syscall}
+\begin{tabular}{|lr|}
+\hline
+\multicolumn{2}{|c|}{用户程序 User Program}        \\ \hline
+应用程序编程接口 API & POSIX, C Standard Library, etc. \\ \hline
+系统调用         & read, write, fork, etc.         \\ \hline
+\end{tabular}
+\end{table}
+
+\newpage
 
 \subsection{系统调用机制的实现}
-在发现了系统调用的本质之后，我们就要着手在我们的小操作系统中实现一套系统调用机制了。不过，不要着急，为了使得后面的思路更清晰，
+在发现了系统调用的本质之后，我们就要着手在我们的小操作系统中实现一套系统调用机制了。不过不要着急，为了使得后面的思路更清晰，
 我们先来整理一下系统调用的流程：
 \begin{enumerate}
-  \item 调用库函数
-  \item 调用一个用户空间的系统调用函数（用于封装设置寄存器、传参等繁复的操作）。
-  \item 内核空间系统调用函数被执行。
-  \item 从相应寄存器中收集返回值，并返回到库函数中。
-  \item 库函数返回，回到用户程序
+  \item 调用一个封装好的用户空间的库函数（如writef）
+  \item 调用用户空间的syscall\_*函数
+  \item 调用msyscall，用于陷入内核态
+  \item 陷入内核，内核取得信息，执行对应的内核空间的系统调用函数（sys\_*）
+  \item 执行系统调用，并返回用户态，同时将返回值“传递”回用户态
+  \item 从库函数返回，回到用户程序调用处
 \end{enumerate}
 
-也就是说，为了实现系统调用机制并实现我们自己的系统调用，我们需要找到内核空间中的系统调用函数，以及对应的用户空间系统调用函数。
-不难发现，内核空间的系统调用实现在lib/syscall\_all.c中。在这段代码中，有大量的以sys开头的函数，这些函数便是内核空间的
-系统调用的实现。
+在用户空间的程序中，我们定义了许多的函数，以writef函数为例，这一函数实际上并不是最接近内核的函数，它最后会调用一个名为syscall\_putchar
+的函数，这个函数在user/syscall\_lib.c中。在我们的小操作系统实验中，这些syscall开头的函数与内核中的系统调用函数（sys开头的函数）是一一对应的，
+syscall开头的函数是我们在用户空间中最接近的内核的也是最原子的函数，而sys开头的函数是内核中系统调用具体内容。
+syscall开头的函数的实现中，它们毫无例外都调用了msyscall函数，而且函数的第一个参数都是一个与调用名相似的宏（如SYS\_putchar），
+在我们把我们的小操作系统实验中把这个参数称为\textbf{系统调用号}（请找到这个宏的定义，了解系统调用号的排布规则），系统调用号是
+内核区分这究竟是何种系统调用的唯一依据。除此之外msyscall函数还有5个参数，这些参数是系统调用实际需要使用的参数，而为了方便我们使用了
+取了最多参数的系统调用所需要的参数数量（syscall\_mem\_map函数具有5个参数）。
 
-之后，我们再看用户空间的user/syscall\_lib.c，发现了一堆以syscall开头的函数，每个函数都根据传入的参数，调用了msyscall函数。
-看到这里，你想到了什么？msyscall中一定是实际执行设置寄存器、执行syscall指令一类的底层操作的函数。
-我们看到的这些syscall开头的函数为用户封装了这些繁复的过程。
+在syscall\_*系列函数中，我们将参数传递给了msyscall函数，而这些参数究竟是如何安置的呢？这里就需要用MIPS的调用规范来说明这件事情了，
+我们把函数体中没有函数调用语句的函数称为\textbf{叶函数}，自然如果有函数调用语句的函数称为非叶函数。在MIPS的调用规范中，进入函数体时会通过对栈指针做减法的方式
+为自身的局部变量、返回地址、调用函数的参数分配存储空间（叶函数没有后两者），在函数调用结束之后会对栈指针做加法来释放这部分空间，我们把
+这部分空间称为\textbf{栈帧（Stack Frame）}。非叶函数是在调用方的栈帧的底部预留被调用函数的参数存储空间（被调用方从调用方函数的栈帧中取得参数）。
+以我们的小操作系统为例，msyscall函数一共有6个参数，前4个参数会被syscall开头的函数分别存入\$a0-\$a3寄存器（寄存器传参的部分）同时栈帧底部保留16字节的空间（不要求存入参数的值），
+后2个参数只会被存入在前4的参数的预留空间之上的8字节空间内（没有寄存器传参）。这些过程虽然不需要我们显式地编写汇编来完成，但是需要在内核中是以汇编的方式显式地把函数的参数值“转移”到内核空间中的。
 
-这些syscall函数已经被预先实现好了，我们来看看msyscall函数。这个函数位于user/syscall\_wrap.S。
-msyscall需要实现将必要的参数压栈，并执行syscall指令陷入内核态。
+既然参数的位置已经被合理安置，那么接下来我们需要编写msyscall函数，这个叶函数没有局部变量，也就是说这个函数不需要分配栈帧，我们\textbf{只}需要执行
+特权指令（syscall）来陷入内核态以及函数调用返回即可。
 
 \begin{exercise}
-填写msyscall，使得系统调用机制可以正常工作。
+填写user/syscall\_wrap.S中的msyscall函数，使得用户部分的系统调用机制可以正常工作。
 \end{exercise}
 
-看到这个exercise你是不是觉得有些无语？完全没有可以参考的信息啊！我们从何知道这个msyscall如何填写呢？
-仔细思考一下，msyscall的主要工作是设置栈、寄存器等，为后面的系统调用设置好参数。也就是说，想知道msyscall需要做些什么，
-我们只需看一下后面内核中的相关代码是如何使用这些参数的就OK了。知道了内核用了什么，自然也就知道我们应当设置些什么。
-内核处理系统调用的中断处理程序位于lib/syscall.S中，相应的注释已经预先加在了代码中，如代码\ref{code:handlesys.S}所示。
+在通过特权指令syscall陷入内核态后，处理器将PC寄存器指向一个相同的内核异常入口。在
+trap\_init函数中将系统调用类型的异常的入口设置为了handle\_sys函数，这一函数在lib/syscall.S中。需要注意的是，此处的栈指针是内核空间的栈指针，内核将运行现场
+保存到内核空间后（其保存的结构与结构体\mintinline{c}|struct Trapframe|等同），栈指针指向这个结构体的起始位置，你可以借助include/trap.h的宏使用lw指令取得保存现场的一些寄存器的值。
 
-\begin{codeBoxWithCaption}{系统调用服务程序\label{code:handlesys.S}}
+
+\begin{codeBoxWithCaption}{内核的系统调用处理程序\label{code:handlesys.S}}
   \inputminted[linenos]{gas}{codes/handlesys.S}
 \end{codeBoxWithCaption}
 
-通过上面的代码，我们可以知道，所有的参数都应当按照顺序放入栈中。根据MIPS的ABI标准，前4个参数通过a0-a3寄存器传递，
-后面的参数通过栈了传递。值得注意的是，标准要求程序必须分配足够容纳\textbf{所有}参数的栈空间。也就是说，尽管在函数调用的过程中，
-前四个参数是通过寄存器来传递的，但程序依旧需要为其分配栈空间。也就是说，
-GCC在生成调用msyscall函数的代码时已经按照标准为我们开了一个足够大的栈，我们在msyscall中只需将前四个参数压入到栈中即可，
-无需再自行分配栈空间。
+\begin{thinking}\label{think-syscall}
+ 思考并回答下面的问题：
+  \begin{itemize}
+   \item 内核在保存现场的时候是如何避免破坏通用寄存器的？
+   \item 系统陷入内核调用后可以直接从当时的\$a0-\$a3参数寄存器中得到用户调用msyscall留下的信息吗？
+   \item 我们是怎么做到让sys开头的函数“认为”我们提供了和用户调用msyscall时同样的参数的？
+   \item 内核处理系统调用的过程对Trapframe做了哪些更改？这种修改对应的用户态的变化是？
+  \end{itemize}
+\end{thinking}
 
-完成msyscall函数后，我们的小内核的系统调用机制便可以正常工作了。
+
+\begin{exercise}
+按照lib/syscall.S中的提示，完成handle\_sys函数，使得内核部分的系统调用机制可以正常工作。
+\end{exercise}
+
+做完这一步，整个系统调用的机制已经可以正常工作，接下来我们要来实现几个具体的系统调用。
 
 \subsection{基础系统调用函数}
 
 在系统调用机制搞定之后，我们自然是要弄几个系统调用玩一玩了。我们实现些什么系统调用呢？打开 lib/syscall\_all.c，可以看到玲琅满目的系统调用函数等着我们去填写。这些系统调用都是基础的系统调用，不论是之后的IPC还是fork，都需要这些基础的系统调用作为支撑。
-首先我们看向sys\_mem\_alloc。这个函数的主要功能是分配内存，简单的说，用户程序可以通过这个系统调用给该程序所允许的虚拟内存空间内存分配实际的物理内存，需要用到一些我们之前在pmap.c中所定义的函数
+首先我们看向sys\_mem\_alloc。这个函数的主要功能是分配内存，简单的说，用户程序可以通过这个系统调用给该程序所允许的虚拟内存空间内存\textbf{显式地}分配实际的物理内存，需要用到一些我们之前在pmap.c中所定义的函数
 \begin{exercise}
 实现lib/syscall\_all.c中的int sys\_mem\_alloc(int sysno,u\_int envid, u\_int va, u\_int perm)函数
 \end{exercise}
@@ -177,8 +204,8 @@ GCC在生成调用msyscall函数的代码时已经按照标准为我们开了一
 \begin{exercise}
 实现lib/syscall\_all.c中的void sys\_yield(void)函数
 \end{exercise}
-可能你也注意到了，在此我们的系统调用函数并没使用到它的第一个参数sysno，在这里，sysno作为系统调用号被传入，现在起的更多是一个”占位“的作用，能和之前用户层面的系统调用函数参数顺序相匹配，更好理解。
-\section{进程间通信机制(Inter-Process Communication)}
+可能你也注意到了，在此我们的系统调用函数并没使用到它的第一个参数sysno，在这里，sysno作为系统调用号被传入，现在起的更多是一个”占位“的作用，能和之前用户层面的系统调用函数参数顺序相匹配。
+\section{进程间通信机制(IPC)}
 在系统调用机制搞定之后，我们自然是要弄几个系统调用玩一玩了。作为一个微内核系统，我们要来实现个什么系统调用呢？
 没错，当然是IPC了。IPC可是微内核最重要的机制之一了。
 
@@ -192,11 +219,11 @@ GCC在生成调用msyscall函数的代码时已经按照标准为我们开了一
 根据之前的讨论，我们能够得知这样几个细节:
 
 \begin{itemize}
-  \item IPC的目的是使两个进程之间可以通讯。
+  \item IPC的目的是使两个进程之间可以通讯
   \item IPC需要通过系统调用来实现
 \end{itemize}
 
-所谓通讯，最直观的一种理解就是交换数据。假如我们能够将让一个进程有能力将数据传递给另一个进程，
+所谓通信，最直观的一种理解就是交换数据。假如我们能够将让一个进程有能力将数据传递给另一个进程，
 那么进程之间自然具有了相互通讯的能力。那么，要实现交换数据，我们所面临的最大的问题是什么呢？
 没错，问题就在于\textbf{各个进程的地址空间是相互独立的}。相信你在实现内存管理的时候已经深刻体会到了这一点，
 每个进程都有各自的地址空间，这些地址空间之间是相互独立的。因此，要想传递数据，
@@ -254,7 +281,7 @@ int sys\_ipc\_can\_send(int sysno,u\_int envid, u\_int value, u\_int srcva, u\_i
 
 值得一提的是，由于在我们的用户程序中，会大量使用srcva为0的调用来表示不需要传递物理页面，因此在编写相关函数时也需要注意此种情况。
 
-讲完IPC后，我们来利用前面已经实现了的基础系统调用来实现一个非常有意思的函数：fork。
+讲完IPC后你已经可以参照编写用户进程，利用实现好的IPC系统调用来实现一些有意思的小程序了。
 
 \section{FORK}
 
@@ -316,13 +343,27 @@ father.pid:16902
   \end{itemize}
 \end{thinking}
 
+
+\begin{thinking}\label{think-fork的调用}
+ 关于fork函数的两个返回值，下面说法正确的是：
+
+  A、fork在父进程中被调用两次，产生两个返回值
+
+  B、fork在两个进程中分别被调用一次，产生两个不同的返回值
+
+  C、fork只在父进程中被调用了一次，在两个进程中各产生一个返回值
+
+  D、fork只在子进程中被调用了一次，在两个进程中各产生一个返回值
+\end{thinking}
+
+
 % \item 表明子进程拷贝了父进程的代码段。
  %\item 子进程却没有执行fork()之前父进程的代码，表明子进程开始运行时的PC值不是二进制镜像的入口！
  %\item fork有两个返回值，不是指fork在同一个进程中返回两次，而是指fork在两个进程中均有返回值，且返回值不同。
 
 %限于笔者自身的理解与表述能力，对fork的表述还是含糊不清的，如果想获得更多的理解，推荐查看链接中的帖子：\url{http://bbs.chinaunix.net/forum.php?mod=viewthread&tid=311067}
 
-\subsection{fork的结构}
+\subsection{写时复制机制}
 
 通过使用初步了解fork后，先不着急实现它。俗话说“兵马未动，粮草先行”，我们先来了解一下关于fork的底层细节。
 根据维基百科的描述，在fork时，父进程会为子进程分配独立的地址空间。但是分配独立的虚拟空间并不意味
@@ -343,23 +384,14 @@ Wiki Fork: In Unix systems equipped with virtual memory support (practically all
 按照共享物理内存的说法， 那岂不是变成了“父教子从，子不得不从”？
 
 这两种说法实际上不矛盾，因为父子进程共享物理内存是有前提条件的：共享的物理内存不会被任一进程修改。那么，对于那些父进程或子进程修改的内存我们又该如何处理呢？
-这里我们引入一个新的概念——写时复制（copy on write，简称COW)。写时复制，通俗来讲，就是当父子进程中有\textbf{更改}相应段的行为发生时，
-再为子进程相应的段分配物理空间，而\textbf{子进程的代码段继续共享父进程的物理空间}（两者的代码完全相同）。
+这里我们引入一个新的概念——写时复制（Copy On Write，简称COW)。通俗来讲就是当父子进程中有\textbf{修改}内存（一般是数据段）的行为发生时，内核捕获这种缺页中断后，再为\textbf{发生内存修改的进程}相应的地址分配物理页面，而一般来说子进程的代码段继续共享父进程的物理空间（两者的代码完全相同）。
 
 \begin{note}
 如果在fork之后在子进程中执行了exec，由于这时和父进程要执行的代码完全不同，子进程的代码段也会分配单独的物理空间。
 \end{note}
 
-更深层次地讲，COW就是父进程和子进程平时共享物理页面，写时复制物理页面。为了能够在物理页被修改时及时处理，
-只要是进程可写的页面，就要\textbf{通过设置权限位PTE\_COW的方式}被保护起来。\label{页保护与处理}无论父进程还是子进程何时试图写一个被保护的
-物理页，就会产生一个异常。异常发生后，操作系统检测该物理页是否为copy on write的页面， 如果是的话将原页复制一份，
-然后重新映射到导致异常的虚拟地址上，之后重新执行指令。下面这张图较为生动地展示了这一过程：
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=12cm]{fork_cow}
-  \caption{fork的Copy-On-Write机制}\label{fig:fork_cow}
-\end{figure}
+在我们的小操作系统实验中，对于所有的可被写入的内存页面，都需要\textbf{通过设置页表项标识位PTE\_COW的方式}被保护起来。
+无论父进程还是子进程何时试图写一个被保护的物理页，就会产生一个异常（一般指缺页中断 Page Fault），这一异常的处理会在后文详细介绍。
 
 \begin{note}
 早期的Unix系统对于fork采取的策略是：直接把父进程所有的资源复制给新创建的进程。
@@ -367,179 +399,230 @@ Wiki Fork: In Unix systems equipped with virtual memory support (practically all
 当然更糟的情况是，如果新进程打算通过exec执行一个新的映像，那么所有的拷贝都将前功尽弃。
 \end{note}
 
-在我们的实验中，fork呢，主要由以下几个子函数和一些我们之前填过的系统调用构成：
-\begin{description}
- \item [pgfault] 还记得之前的cow吗？没错，这个函数就是为了解决这个问题而存在的。
- 在我们的实验中，我们通过\textbf{pgfault}函数来对共享页保护引起的异常进行处理。
- \item [syscall\_env\_alloc] 这个系统调用是fork两个返回值的关键所在，fork是通过判断这个系统
- 调用的返回值是否为0从而判断当前执行fork的是父进程还是子进程。
- \item [duppage] 这个函数就是用来给共享的物理页添加保护权限位的。在fork中我们要通过遍历用户空间
- 来寻找“需要添加保护”的页——即那些可能会被进程修改的物理页。
-\end{description}
-
-\label{fork区分父子进程}
-小红：“咦，不科学啊。fork的两个返回值为啥是sys\_env\_alloc的功劳？不是说\hyperref[fork与子进程]{子进程只执行fork之后的代码吗}？”
-
-小绿：“你还别不信，还真的就是sys\_env\_alloc的功劳。我们前面是提到了子进程执行fork之后的代码，实则不准确：因为在fork内部呀，
-就要用sys\_env\_alloc的两个返回值区分开父子进程，好安排他们在返回之后执行不同的任务呀！你想想，虽然子进程在被创建出来就已经有了
-PCB控制块和进程上下文，但是它还缺少一个UXSTACK——用户异常栈，更重要的是，子进程是否能够开始被调度是要由父进程决定的。
-
-我们在这里又看到了一个新的概念，异常栈。那么它和正常栈有什么区别呢？你应该知道，一般的用户进程运行时，会有自己的用户栈
-（以 USTACKTOP 为栈顶）。但是当fork结束后,由于写时保护的机制,大部分可写的用户空间都被保护起来了。
-所以如果之后出现了"写操作",就会使用\textbf{pgfault}来处理异常。但注意,我们是不能直接在用户栈上处理这个异常的！
-因为在pgfault中会修改用户空间(比如申请一个变量,会向用户栈里写东西,要知道用户栈也被保护起来了),
-如果仍然在用户空间上进行，会继续写用户空间,继续触发页异常,继续pgfault,造成死循环。
-所以为了区别于用户的正常栈，内核将在另外一个栈（以 UXSTACKTOOP 为栈顶）——用户异常栈上运行用户已经向内核注册过的的异常处理程序。
-
-在讲完上述这些后，不知道你对fork的具体流程是否弄清楚了呢？下面就让我们来具体地一个函数一个函数地攻破它吧！
-
 \subsection{返回值的秘密}
 
-刚刚接触fork这个函数，相信你最感兴趣的可能不是别的，而是fork的两个返回值。而我们刚才也发现，
-fork的两个返回值实际上是由sys\_env\_alloc所引起的，究其根本，秘密在sys\_env\_alloc
-身上。那么，我们首先来思考一个问题：
+小红：“咦，不科学啊。fork的两个返回值为啥是系统调用syscall\_env\_alloc的功劳？不是说子进程只执行fork之后的代码吗？”
 
-\begin{thinking}\label{think-fork的调用}
- 关于fork函数的两个返回值，下面说法正确的是：
+小绿：“你还别不信，还真的就是系统调用syscall\_env\_alloc的功劳。我们前面是提到了子进程执行fork之后的代码，实则不准确：因为在fork内部呀，
+就要用sys\_env\_alloc的两个返回值区分开父子进程，好安排他们在返回之后执行不同的任务呀！你想想，虽然子进程在被创建出来就已经有了
+进程控制块和进程上下文，但是子进程是否能够开始被调度是要由父进程决定的。
 
-  A、fork在父进程中被调用两次，产生两个返回值
+在我们的小操作系统实验中，需要强调的一点是我们实现的fork是一个用户态函数，fork函数中需要若干个“原子的”系统调用来完成所期望的功能。其中最核心的一个系统调用就是一个新的进程的创建syscall\_env\_alloc。
 
-  B、fork在两个进程中分别被调用一次，产生两个不同的返回值
+在fork的实现中，我们是通过判断syscall\_env\_alloc的返回值来决定fork的返回值以及后续动作，所以会有类似这样结构的代码片段：
+\begin{minted}[linenos]{c}
+ envid = syscall_env_alloc();
+ if (envid == 0) {
+     // 子进程
+     ...
+ }
+ else {
+     // 父进程
+     ...
+ }
+\end{minted}
 
-  C、fork只在父进程中被调用了一次，在两个进程中各产生一个返回值
+既然fork的目的是使得父子进程处于几乎相同的运行状态，我们可以认为它们都应该经历了同样的“恢复运行现场”的过程，只不过对于父进程是从系统调用中返回的恢复现场，
+而对于子进程则是在进程调度时进行的现场恢复。在现场恢复后，进程会从同样的地方返回到fork函数中。而它们携带的函数的返回值是不同的，这也就能够在fork函数中区分两者。
 
-  D、fork只在子进程中被调用了一次，在两个进程中各产生一个返回值
-\end{thinking}
-
-以这个问题作为我们的开题小菜，
-结合刚才未让你填写的系统调用sys\_env\_alloc函数来说明fork的两个返回值。
-
-\begin{codeBoxWithCaption}{alloc——fork之魂\label{code:sys_env_alloc.c}}
-  \inputminted[linenos]{c}{codes/sys_env_alloc.c}
-\end{codeBoxWithCaption}
-
-这个系统调用就是为了新建一个进程。从系统调用的名字上来看我们也能发现，实际上这个系统调用
-和\textbf{env\_alloc}的功能很像。但是我们又提到fork是一种不完全复制，所以它除了建造外，还需要
-用一些当前进程的信息作为模版来填充新的进程。那么还需要复制些什么？
+为了实现这一特性，你可能需要先实现sys\_env\_alloc的几个任务，它除了创建一个新的进程外，还需要用一些当前进程的信息作为模版来填充这个进程：
 
 \begin{description}
- \item [CPU环境] 要复制一份当前进程的运行环境到子进程的env\_tf控制块里。
- \item [PC] 刚才那些知识综合一下，你应该也能推断出子进程实际上是从sys\_env\_alloc返回的地方作为起点，执行父进程的代码。
- 所以子进程的PC值应该被设置为syscall\_env\_alloc返回后的地址。
- \item [返回值有关] 看到syscall\_env\_alloc提示你应该能明白，我们需要调整某个寄存器的值以让syscall\_env\_alloc在子进程中可以返回0。
- \item [进程状态] 我们当然不能让子进程在syscall\_env\_alloc返回后就直接进入调度，因为这时候它还没有做好充分的准备，所以我们需要设定不能
+ \item [运行现场] 要复制一份当前进程的运行现场Trapframe到子进程的进程控制块中。
+ \item [程序计数器] 子进程的程序计数器应该被设置为syscall\_env\_alloc返回后的地址，也就是它陷入异常地址的下一行指令的地址，\textbf{这个值已经存在于Trapframe中}。
+ \item [返回值有关] 这个系统调用本身是需要一个返回值的（这个返回过程只会影响到父进程），对于子进程则需要对它的运行现场Trapframe进行一个修改。
+ \item [进程状态] 我们当然不能让子进程在父进程syscall\_env\_alloc返回后就直接进入调度，因为这时候它还没有做好充分的准备，所以我们需要设定不能
  让它被加入调度队列。
  \end{description}
 
-了解到这些信息，相信你可以写出一个合格的syscall\_env\_alloc系统调用了，那么下面我们就把它填充完整。
-
 \begin{exercise}
-填写 ./lib/syscall\_all.c 中的函数 sys\_env\_alloc，可以不填返回值。
+填写 lib/syscall\_all.c 中的 sys\_env\_alloc 函数
 \end{exercise}
 
-我们刚才提到了子进程好像是从sys\_env\_alloc返回之后的地方开始执行的，那么，证据呢？
+在解决完返回值的问题之后，父与子就能够分别走上各自的旅途了。
 
-证据其实离我们一点都不远——在刚才的fork内部我们讲到需要区分父子进程，所以需要判断sys\_env\_alloc的返回值，所以会执行这样结构的语句：
-\begin{minted}[linenos]{c}
- envid = sys_env_alloc();
- //在父进程中
- if(envid!=0)
-    ...
- //在子进程中
- else
-   ...
-\end{minted}
+\subsection{父子各自的旅途}
 
-那么现在的问题就是在不同的进程中，为什么envid会有两个值，一个为0，一个非0？
-
-实际上是这样的：在父进程运行到\mintinline{c}|envid = sys_env_alloc|这句话时，我们把它拆分成两步，其实是如下的一个过程：
-\begin{minted}[linenos]{c}
-#假设返回值存放的寄存器为R
-sys_env_alloc() -> R
-R -> envid
-\end{minted}
-
-首先运行sys\_env\_alloc()函数，它的返回值被放在了R寄存器中。下一步将R寄存器中的值赋给envid。
-我们再返回来看一下前面所述\textbf{“子进程的PC值应该被设置为sys\_env\_alloc返回后的地址”。}所以当子进程开始被调度时，
-子进程运行的第一条\textbf{指令}实际上是上述代码中的\mintinline{c}|R -> envid|，又因为我们之前\textbf{在父进程中已经设置子进程的进程控制块
-的R寄存器值为0}，所以在子进程中，envid的值是0！而在父进程中，因为父进程完整地执行完了sys\_env\_alloc，所以其R寄存器存放的正是sys\_env\_alloc的返回值。
-
-更直观一些，请看图\ref{fig:Two_returns}：
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=16cm]{Two_returns}
-  \caption{两个返回值}\label{fig:Two_returns}
-\end{figure}
+进程在很多时候（如进程通信）都是需要访问自身的进程控制块的，用户程序初次运行时会将一个\mintinline{c}| struct Env *env|
+指针指向自身的进程控制块。作为子进程，它很明显具有了一个与父亲不同的进程控制块，所以在第一次被调度的时候（当然
+这时还是在fork函数中）它就需要将env指针指向自身的进程控制块，这个时候还需要通过另一个系统调用来取得自己的
+envid，因为对于子进程而言syscall\_env\_alloc返回的是一个0值。做完这一步，子进程就可以从fork函数中返回，开始自己的旅途了。
 
 \begin{exercise}
-补充./lib/syscall\_all.c 中的函数 sys\_env\_alloc的返回值。
+ 填写 user/fork.c 中的fork 函数中关于sys\_env\_alloc的部分和“子进程”执行的部分
 \end{exercise}
 
-返回值的秘密我们讲完了，那么接下来该做些什么呢？当然是填写fork啦，根据\hyperref[fork区分父子进程]{上文}我们知道，
-fork内部要通过\mintinline{c}|syscall_env_alloc()|的返回值来区分父子进程，那么在父进程中和在子进程中分别要完成什么任务呢？
-
-\subsection{父与子}
-
-fork里的\mintinline{c}| extern struct Env *env;|，这个env可是大有来历：
-它是源自外部函数\textbf{./user/libos.c}里的一个全局变量。找到entry.S仔细观察一下就可以发现：在整个实验体系中，
-\_start叶函数执行完毕后会跳转到libmain执行，真正的入口函数是从libmain开始的。libmain中使用env指向当前的进程以便之后进程通信的需要，
-然后才开始执行我们所使用的测试函数中的umain内容。\textbf{所以，为了使得env始终指向当前进程}，在子进程中我们需要进行必要的设置。
-
-\begin{exercise}
- 补充./user/fork.c 中的函数 fork 中关于sys\_env\_alloc的部分和“子进程”执行的部分。
-\end{exercise}
-
-那父进程需要做些什么呢？我们在刚才提到过了父进程的任务：父进程要帮子进程搭建一个UXSTACK，
-然后为了能让这个错误栈正确地投入使用，还得帮子进程注册错误处理函数。最后父进程还需要将子进程的状态更改为RUNNABLE，
-子进程就可以参与调度了,这时候父进程就可以松一口气了。
-
-难道真的能松口气了？不，在这一切之前父进程漏了最重要的一步：没把子进程跟父进程共享的物理页保护起来。
-所以，我们还需要遍历父进程的\textbf{大部分用户空间页}，然后找到可写的页，让它\textbf{在父进程和子进程}中同时被PTE\_COW权限保护起来！
-我们前面提到了，保护页用的函数是啥？对，就是duppage函数。
+父亲在儿子醒来之前则需要做更多的准备，而这些准备中最重要的一步是遍历进程的\textbf{大部分用户空间页}，
+对于所有可以写入的页面的页表项，\textbf{在父进程和子进程都}加以PTE\_COW标志位保护起来。这里需要
+实现duppage函数来完成这个过程。
 
 \begin{thinking}\label{think:遍历页}
 	如果仔细阅读上述这一段话,你应该可以发现,我们并不是对所有的用户空间页都使用duppage进行了保护。那么究竟哪些用户空间页可以保护，哪些不可以呢，
 	请结合 include/mmu.h 里的内存布局图谈谈你的看法。
 \end{thinking}
 
-\subsubsection{duppage}
-
-在duppage函数中，唯一需要强调的一点是要对不同权限的页有着不同的处理方式。
+\begin{thinking}\label{think:vpt的使用}
+在遍历地址空间存取页表项时你需要使用到vpd和vpt这两个“指针的指针”，请思考并回答这几个问题：
 \begin{itemize}
- \item 在父进程中可写的或者是被打上PTE\_COW标记的页，需要在子进程中为其加上PTE\_COW的标志。
- \item 在父进程中只读的页，按照相同的权限给子进程就好。
+ \item vpt和vpd的作用是什么？怎样使用它们？
+ \item 从实现的角度谈一下为什么能够通过这种方式来存取进程自身页表？
+ \item 它们是如何体现自映射设计的？
+ \item 进程能够通过这种存取的方式来修改自己的页表项吗？
 \end{itemize}
+\end{thinking}
+
+在duppage函数中，唯一需要强调的一点是要对不同权限的页有着不同的处理方式，你可能会遇到这几种情况：
+\begin{description}
+ \item [只读页面] 按照相同权限（只读）映射给子进程即可
+ \item [共享页面] 即具有PTE\_LIBRARY标记的页面，这类页面需要保持共享的可写的状态
+ \item [写时复制页面] 即具有PTE\_COW标记的页面，这类页面是上一次的fork的duppage的结果
+ \item [可写页面] 需要给父进程和子进程的页表项都加上PTE\_COW标记
+\end{description}
 
 \begin{exercise}
- 结合注释，补充 user/fork.c 中的函数 duppage。
+ 结合注释，填写 user/fork.c 中的 duppage 函数
 \end{exercise}
 
-\subsubsection{pgfault}
-我们\hyperref[页保护与处理]{前面}提到了写时复制。pgfault就是负责处理写时异常的异常处理函数。
-pgfault很简单，按下述步骤执行即可：
+\begin{note}
+在我们的小操作系统实验中实现的fork并不是一整个原子的过程，所以会出现一段时间（也就是在duppage之前的时间）
+我们没有来得及为堆栈所在的页面
+设置写时复制的保护机制，在这一段时间内对堆栈的修改（比如发生了其他的函数调用），则会将非叶函数syscall\_env\_alloc
+函数调用的栈帧中的返回地址覆盖。这一问题对于父进程来说是理所当然的，然而对于子进程来说，这个覆盖导致
+的后果则是在从syscall\_env\_alloc返回时跳转到一个不可预知的位置造成panic。当然你现在看到的代码已经通过一个
+优雅的办法来修补这个臭虫：与其他系统调用函数不同，syscall\_env\_alloc是一个内联（inline）的函数，也就是说
+这个函数并不会被编译为一个函数，而是直接内联展开在fork函数内。所以syscall\_env\_alloc的栈帧就不存在了，而
+msyscall函数的返回指令也直接返回到了fork函数内。如此这个困扰了学生若干年的臭虫就解决了。
+\end{note}
+
+在完成写时复制的保护机制后，还不能让子进程处于能被调度的状态，因为作为父亲它还有其他的责任——为写时复制特性
+的\textbf{缺页中断}处理做好准备。
+
+\subsection{缺页中断}
+
+内核在捕获到
+一个常规的\textbf{缺页中断（Page Fault）}时（在MIPS中这个情况特指TLB缺失，因为MIPS不存在MMU只存在TLB，TLB缺失查找填入都是内核以软件编
+程的方式完成的），会进入到一个在trap\_init中“注册”的handle\_tlb的内核处理函数中，这一汇编函数的实现在lib/genex.S
+中，化名为一个叫do\_refill的函数。如果物理页面在页表中存在，则会将TLB填入并
+返回异常地址再次执行内存存取的指令。如果物理页面不存在，则会触发一个一般意义的缺页错误，并跳转到mm/pmap.c中的
+pageout函数中，在存取地址合法的情况下，内核会在用户空间的对应地址分配映射一个物理页面（被动的分配页面）来解
+决缺页的问题。
+
+前文中我们提到了写时复制特性，而写时复制特性也是依赖于缺页中断的。我们在trap\_init中注册了另外一个处理函数——handle\_mod，这一函数会跳转到lib/traps.c的page\_fault\_handler函数中，这个函数正是
+处理写时复制特性的缺页中断的内核处理函数。
+
+你会发现在这个函数中似乎并没有做任何的页面复制操作，这是为什么呢？答案是这样的，在我们的小操作系统实验中按照
+微内核的设计理念，会将大部分的功能都从内核移到用户程序，其中也包括了写时复制的缺页中断处理。真正的处理过程
+是用户进程自身去完成的。
+
+如果需要用户进程去完成页面复制等处理过程，是不能直接使用原先的堆栈的（因为发生缺页错误
+的也可能是正常堆栈的页面），所以这个时候用户进程就需要一个另外的堆栈来执行处理程序，我们把这个堆栈称作
+\textbf{异常处理栈}，它的栈顶对应的是宏UXSTACKTOP。异常处理栈需要父进程为自身以及子进程分配映射物理页面。
+此外内核还需要知晓进程自身的处理函数所在的地址，这个地址存在于进程控制块的env\_pgfault\_handler域中，这个地址
+也需要事先由父进程通过系统调用设置。
+
+\begin{exercise}
+完成 lib/traps.c 中的 page\_fault\_handler 函数
+\end{exercise}
+
+\begin{thinking}\label{think:pgfault-kernel}
+page\_fault\_handler 函数中，你可能注意到了一个向异常处理栈复制Trapframe运行现场的过程，请思考并回答这几个问题：
+\begin{itemize}
+  \item 这里实现了一个支持类似于“中断重入”的机制，而在什么时候会出现这种“中断重入”？
+  \item 内核为什么需要将异常的现场Trapframe复制到用户空间？
+\end{itemize}
+\end{thinking}
+
+让我们回到fork函数，在提示使用syscall\_env\_alloc之前，有另一个提示——使用set\_pgfault\_handler函数来“安装”
+处理函数。
+\begin{minted}[linenos]{c}
+void set_pgfault_handler(void (*fn)(u_int va))
+{
+  if (__pgfault_handler == 0) {
+    if (syscall_mem_alloc(0, UXSTACKTOP - BY2PG, PTE_V | PTE_R) < 0 ||
+      syscall_set_pgfault_handler(0, __asm_pgfault_handler, UXSTACKTOP) < 0) {
+      writef("cannot set pgfault handler\n");
+      return;
+    }
+  }
+  __pgfault_handler = fn;
+}
+\end{minted}
+
+上面的set\_pgfault\_handler函数中，进程\textbf{为自身}分配映射了异常处理栈，
+同时也用系统调用告知内核自身的处理程序是\_\_asm\_pgfault\_handler（在entry.S定义），随后内核也需要就将进程控制块的env\_pgfault\_handler域设为它。在函数的最后，将在entry.S定义的字\_\_pgfault\_handler赋值为fn，而这个fn究竟是什么我们稍后再说。这里需要你完成内核设置进程控制块中的两个域的系统调用。
+
+\begin{exercise}
+完成 lib/syscall\_all.c 中的 sys\_set\_pgfault\_handler 函数
+\end{exercise}
+
+我们现在知道了缺页中断会返回到entry.S中的\_\_asm\_pgfault\_handler函数，我们再来看这个函数会
+做些什么。
+\begin{minted}[linenos]{gas}
+__asm_pgfault_handler:
+lw      a0, TF_BADVADDR(sp)
+lw      t1, __pgfault_handler
+jalr    t1
+nop
+
+lw      v1, TF_LO(sp)
+mtlo    v1
+lw      v0, TF_HI(sp)
+lw      v1, TF_EPC(sp)
+mthi    v0
+mtc0    v1, CP0_EPC
+lw      $31, TF_REG31(sp)
+
+lw      $1, TF_REG1(sp)
+lw      k0, TF_EPC(sp)
+jr      k0
+lw      sp, TF_REG29(sp)
+\end{minted}
+
+从内核返回后，此时的栈指针是由内核设置的在异常处理栈的栈指针，而且指向一个由内核复制好的Trapframe结构体的底部。
+通过宏TF\_BADVADDR用lw指令取得了Trapframe中的cp0\_badvaddr字段的值，这个值
+也正是发生缺页中断的虚拟地址。将这个地址作为第一个参数去调用了\_\_pgfault\_handler这个字内存储的函数，不难看出这个函数是真正进行处理的函数。
+函数返回后就是一段类似于恢复现场的汇编，最后非常巧妙地利用了MIPS的延时槽特性跳转的同时恢复了栈指针。
+
+\begin{thinking}\label{think:pgfault-user-1}
+到这里我们大概知道了这是一个由用户程序处理并由用户程序自身来恢复运行现场的过程，请思考并回答以下几个问题：
+\begin{itemize}
+  \item 用户处理相比于在内核处理写时复制的缺页中断有什么优势？
+  \item 从通用寄存器的用途角度讨论用户空间下进行现场的恢复是如何做到不破坏通用寄存器的？
+\end{itemize}
+\end{thinking}
+
+说到这里，我们就要来实现真正进行处理的函数：user/fork.c中的pgfault函数了，pgfault需要完成这些任务：
 \begin{enumerate}
-	\item 判断页是否为copy-on-write，是则进行下一步;否则报错。
-	\item 分配一个新的内存页到临时位置，将要复制的内容拷贝到刚刚分配的页中;
-	\item 将临时位置上的内容映射到指定地址va，然后解除临时位置对内存的映射;
+	\item 判断页是否为写时复制的页面，是则进行下一步，否则报错
+	\item 分配一个新的内存页到临时位置，将要复制的内容拷贝到刚刚分配的页中
+	\item 将临时位置上的内容映射到发生缺页中断的虚拟地址上，然后解除临时位置对内存的映射
 \end{enumerate}
 
 \begin{exercise}
-	结合注释，补充 user/fork.c 中的函数 pgfault。
+填写 user/fork.c 中的 pgfault函数
 \end{exercise}
 
-\subsubsection{fork}
-fork的填写参见上述关于父子进程各自任务的描述。其中比较难思考的一点在于\textbf{如何遍历父进程的用户空间}。在这里你需要使用vpd与vpt数组,这两个数组的用法需要你自行思考。
+这里的pgfault也正是父进程在fork中使用set\_pgfault\_handler函数安装的处理函数。
+
+\begin{thinking}\label{think:pgfault-user-2}
+请思考并回答以下几个问题：
+\begin{itemize}
+  \item 为什么需要将set\_pgfault\_handler的调用放置在syscall\_env\_alloc之前？
+  \item 如果放置在写时复制保护机制完成之后会有怎样的效果？
+  \item 子进程需不需要对在entry.S定义的字\_\_pgfault\_handler赋值？
+\end{itemize}
+\end{thinking}
+
+父进程还需要为子进程通过类似于set\_pgfault\_handler函数的方式，用若干系统调用分配子进程的异常处理栈以及设置
+处理函数为\_\_asm\_pgfault\_handler。
+
+说到这里我们需要整理一下思路，fork中父进程在syscall\_env\_alloc后还需要做的事情有：
+\textbf{地址空间的遍历以及duppage}、\textbf{分配子进程的异常处理栈}、\textbf{设置子进程的处理函数}、
+\textbf{设置子进程的运行状态}。最后再将子进程的envid返回就大功告成了。
 
 \begin{exercise}
-结合上文描述与注释，将 user/fork.c 中的函数 fork填充完整。
+ 填写 user/fork.c 中的fork 函数中关于“父进程”执行的部分
 \end{exercise}
-
-\begin{thinking}\label{think:vpt的使用}
-	请结合代码与示意图,回答以下两个问题：
-	1、vpt和vpd宏的作用是什么,如何使用它们？
-	2、它们出现的背景是什么? 如果让你在lab2中要实现同样的功能,可以怎么写？
-\end{thinking}
 
 至此,我们的lab4实验已经基本完成了,接下来就一起来愉快地调试吧！
 
@@ -746,13 +829,15 @@ i am killed ...
 \section{实验思考}
 
 \begin{itemize}
+	\item \hyperref[think-syscall]{\textbf{\textcolor{baseB}{思考-系统调用的实现}}}
 	\item \hyperref[think-father-son]{\textbf{\textcolor{baseB}{思考-不同的进程代码执行}}}
 	\item \hyperref[think-fork的调用]{\textbf{\textcolor{baseB}{思考-fork的返回结果}}}
 	\item \hyperref[think:遍历页]{\textbf{\textcolor{baseB}{思考-用户空间的保护}}}
 	\item \hyperref[think:vpt的使用]{\textbf{\textcolor{baseB}{思考-vpt的使用}}}
+	\item \hyperref[think:pgfault-kernel]{\textbf{\textcolor{baseB}{思考-缺页中断-内核处理}}}
+	\item \hyperref[think:pgfault-user-1]{\textbf{\textcolor{baseB}{思考-缺页中断-用户处理-1}}}
+	\item \hyperref[think:pgfault-user-2]{\textbf{\textcolor{baseB}{思考-缺页中断-用户处理-2}}}
+	
+	
 \end{itemize}
-
-\section{挑战性任务}
-
-我们现在实现的fork是有写时复制机制的,而sfork中是没有的。父子进程在sfork结束后仍然一直共享公共区。本次的挑战性任务就是实现sfork。
 

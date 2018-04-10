@@ -1,69 +1,53 @@
 NESTED(handle_sys,TF_SIZE, sp)
+    SAVE_ALL                            /* 用于保存所有寄存器的汇编宏 */
+    CLI                                 /* 用于屏蔽中断位的设置的汇编宏 */
+    nop
+    .set at                             /* 恢复$at寄存器的使用 */
 
-SAVE_ALL
-CLI
+    /* TODO: 将Trapframe的EPC寄存器取出，计算一个合理的值存回Trapframe中 */
 
-nop
-.set at
-lw t1, TF_EPC(sp)
-lw v0, TF_REG2(sp)
-# 下面这段是在通过系统调用号来查找对应的系统调用的入口地址
-# v0里是系统调用号。
-subu v0, v0, __SYSCALL_BASE
-sltiu t0, v0, __NR_SYSCALLS+1
+    /* TODO: 将系统调用号“复制”入寄存器$a0 */
+    
+    addiu   a0, a0, -__SYSCALL_BASE     /* a0 <- “相对”系统调用号 */
+    sll     t0, a0, 2                   /* t0 <- 相对系统调用号 * 4 */
+    la      t1, sys_call_table          /* t1 <- 系统调用函数的入口表基地址 */
+    addu    t1, t1, t0                  /* t1 <- 特定系统调用函数入口表项地址 */
+    lw      t2, 0(t1)                   /* t2 <- 特定系统调用函数入口函数地址 */
 
-addiu t1, 4
-sw      t1, TF_EPC(sp)
-beqz    t0,  illegal_syscall//undef
-nop
-sll     t0, v0,2
-la      t1, sys_call_table
-addu    t1, t0
-lw      t2, (t1)
-beqz    t2, illegal_syscall//undef
-nop
-# 这里提取了之前用户空间的栈指针的位置。
-lw      t0,TF_REG29(sp)
+    lw      t0, TF_REG29(sp)            /* t0 <- 用户态的栈指针 */
+    lw      t3, 16(t0)                  /* t3 <- msyscall的第5个参数 */
+    lw      t4, 20(t0)                  /* t4 <- msyscall的第6个参数 */
 
-# 这里是核心，这段代码将之前存在栈中的参数载入到了t1-t7这七个寄存器中。
-lw      t1, (t0)
-lw      t3, 4(t0)
-lw      t4, 8(t0)
-lw      t5, 12(t0)
-lw      t6, 16(t0)
-lw      t7, 20(t0)
+    /* TODO: 在当前栈指针分配6个参数的存储空间，并将6个参数安置到期望的位置 */
+    
+    
+    jalr    t2                          /* 调用sys_*函数 */
+    nop
+    
+    /* TODO: 恢复栈指针到分配前的状态 */
+    
+    sw      v0, TF_REG2(sp)             /* 将$v0中的sys_*函数返回值存入Trapframe */
 
-# 为内核中系统调用函数的参数分配栈空间
-subu    sp, 20
+    j       ret_from_exception          /* 从异常中返回（恢复现场） */
+    nop
+END(handle_sys)
 
-# 把参数存在当前的栈上。
-sw      t1, 0(sp)
-sw      t3, 4(sp)
-sw      t4, 8(sp)
-sw      t5, 12(sp)
-sw      t6, 16(sp)
-sw      t7, 20(sp)
-
-# 把前四个参数移入a0~a3。
-# 前四个参数在a0~a3，后面的参数在栈上，这是MIPS的ABI标准的要求。
-move    a0, t1
-move    a1, t3
-move    a2, t4
-move    a3, t5
-
-# 跳转到系统调用函数入口地址
-jalr    t2
-nop
-
-# 释放栈空间
-addu    sp, 20
-
-# 将返回值保存在进程的运行环境的v0寄存器中。
-# 这样返回用户态时，用户就可以获得返回值了。
-sw      v0, TF_REG2(sp)
-
-j       ret_from_exception # extern?
-nop
-
-illegal_syscall: j illegal_syscall
-                        nop
+sys_call_table:                         /* 系统调用函数的入口表 */
+.align 2
+    .word sys_putchar
+    .word sys_getenvid
+    .word sys_yield
+    .word sys_env_destroy
+    .word sys_set_pgfault_handler
+    .word sys_mem_alloc
+    .word sys_mem_map
+    .word sys_mem_unmap
+    .word sys_env_alloc
+    .word sys_set_env_status
+    .word sys_set_trapframe
+    .word sys_panic
+    .word sys_ipc_can_send
+    .word sys_ipc_recv
+    .word sys_cgetc
+    /* 每一个整字都将初值设定为对应sys_*函数的地址 */
+    /* 在此处增加内核系统调用的入口地址 */
