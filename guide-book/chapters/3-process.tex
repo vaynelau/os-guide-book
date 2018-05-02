@@ -704,13 +704,13 @@ panic at init.c:27: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 \end{minted}
 
-当然不会这么整齐，且没有换行，只是交替输出2和1而已～ 不过 1 的个数是 2 的 2倍。 当然还不能放过你，你还需要再思考一部分内容
+当然不会这么整齐，且没有换行，只是交替输出2和1而已～ 不过 1 的个数几乎是 2 的 2倍。 当然还不能放过你，你还需要再思考一部分内容
 
 \begin{thinking}\label{think-调度}
-思考一下你的调度程序，这种调度方式由于某种不可避免的缺陷而造成对进程的不公平。
+思考一下你的调度程序，为什么输出 1 的个数不是恰好 2 的个数的 2 倍。
   \begin{itemize}
-    \item 这种不公平是如何产生的？
-    \item 如果实验确定只运行两个进程，你如何改进可以降低这种不公平？
+    \item 有什么因素会导致这种情况？
+    \item 有什么办法能避免这种情况？
   \end{itemize}
 \end{thinking}
 
@@ -725,7 +725,7 @@ panic at init.c:27: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 \item \hyperref[think-位置]{\textbf{\textcolor{baseB}{思考-位置的含义}}}
 \item \hyperref[think-pc]{\textbf{\textcolor{baseB}{思考-进程上下文的PC值}}}
 \item \hyperref[think-TIMESTACK]{\textbf{\textcolor{baseB}{思考-TIMESTACK的含义}}}
-\item \hyperref[think-调度]{\textbf{\textcolor{baseB}{思考-不公的调度}}}
+\item \hyperref[think-调度]{\textbf{\textcolor{baseB}{思考-调度}}}
 \end{itemize}
 
 \section{挑战性任务}
