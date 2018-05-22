@@ -11,53 +11,46 @@
 
 \section{文件系统概述}
 
-计算机的文件系统是一种存储和组织计算机数据的方法，它使得对其访问和查找变得容易，文件系统使用文件和树形目录
-的抽象逻辑概念代替了硬盘和光盘等物理设备使用数据块的概念，用户使用文件系统来保存数据不必关心数据实际保存在
-硬盘（或者光盘）的地址为多少的数据块上，只需要记住这个文件的所属目录和文件名。在写入新数据之前，用户不必关
-心硬盘上的那个块地址没有被使用，硬盘上的存储空间管理（分配和释放）功能由文件系统自动完成，用户只需要记住数
-据被写入到了哪个文件中。
+计算机的文件系统是一种存储和组织计算机数据的方法，它使得计算机程序对数据访问和查找变得容易，文件系统使用文件和树形目录的抽象逻辑概念代替了硬盘和光盘等物理设备使用数据块的概念，用户使用文件系统来保存数据不必关心数据实际保存在硬盘（或者光盘）的地址为多少的数据块上，只需要记住这个文件的所属目录和文件名。在写入新数据之前，用户不必关心硬盘上的那个块地址没有被使用，硬盘上的存储空间管理（分配和释放）功能由文件系统自动完成，用户只需要记住数据被写入到了哪个文件中。
 
 文件系统通常使用硬盘和光盘这样的存储设备，并维护文件在设备中的物理位置。但是，实际上文件系统也可能仅仅是一种访问数据的界面而已，实际的数据是通过网络协议（如NFS、SMB、9P等）提供的或者内存上，甚至可能根本没有对应的文件（如 proc文件系统）。
 
 严格地说，文件系统是一套实现了数据的存储、分级组织、访问和获取等操作的抽象数据类型（Abstract data type）。
 
 \begin{thinking}\label{think-proc}
-查阅资料，了解Linux/Unix的 /proc 文件系统是什么？有什么作用？Windows操作系统又是如何实现这些功能的？proc
-文件系统这样的设计有什么好处？
+查阅资料，了解Linux/Unix的 /proc 文件系统是什么？有什么作用？Windows操作系统又是如何实现这些功能的？proc 文件系统这样的设计有什么好处和可以改进的地方？
 \end{thinking}
 
 \subsection{磁盘文件系统}
 
-磁盘文件系统是一种设计用来利用数据存储设备来保存计算机文件的文件系统，最常用的数据存储设备是磁盘驱动器，可以直接或者间接地连接到计算机上。严格来说，磁盘文件系统和操作系统中使用的文件系统不一定相同，如我们可以在Linux中挂载使用Ext4、FAT32等多种文件系统的驱动器，但是我们访问这些文件系统的界面都是Linux的VFS文件系统。
+磁盘文件系统是一种设计用来利用数据存储设备来保存计算机文件的文件系统，最常用的数据存储设备是磁盘驱动器，可以直接或者间接地连接到计算机上。严格来说，磁盘文件系统和操作系统中使用的文件系统不一定相同，如我们可以在Linux中挂载使用Ext4、FAT32等多种文件系统的磁盘驱动器，但是Linux中运行的程序访问这些文件系统的界面都是Linux的VFS文件系统。
 
-即使磁盘文件系统和操作系统中使用的文件系统拥有相同的结构，其在磁盘上和内存中的表示也存在一定的差异；文件系统在磁盘上的实现需要充分考虑磁盘的结构。下文中我们使用文件系统统一指代两者。
+本实验中实现的磁盘文件系统和操作系统中使用的文件系统拥有相同的结构，即便如此，其在磁盘上和内存中的表示也存在一定的差异；下文中我们使用文件系统一词统一指代两者。
 
 \subsection{用户空间文件系统}
 
-在以Linux为代表的宏内核操作系统中，文件系统是内核的一部分。文件系统作为内核资源的索引发挥了重要的定位内核资源的作用，重要的mmap，ioctl, read, write操作都依赖文件系统实现。
+在以Linux为代表的宏内核操作系统中，文件系统是内核的一部分。文件系统作为内核资源的索引发挥了重要的定位内核资源的作用，重要的mmap，ioctl, read, write操作都依赖文件系统实现。与此相对的是众多微内核中使用的用户空间文件系统，其特点是文件系统在用户空间中实现，通过特殊的系统调用接口或者通用机制为其他用户程序提供服务。
+与此概念相关的还有用户态驱动的概念。
 
-于此概念相同的还有用户态驱动。
-
-
-\todo{思考题：为什么用户空间驱动？在Linux下如何实现？}
+% \todo{思考题：为什么用户空间驱动？在Linux下如何实现？}
 
 \subsection{文件系统的设计与实现}
 
-在本次实验中，我们将要实现一个简单但结构完整的文件系统。整个文件系统包括以下几个部分
+在本次实验中，我们将要实现一个简单但结构完整的文件系统。整个文件系统包括以下几个部分：
 
 \begin{enumerate}
-	\item \textbf{外部储存设备驱动}为了读写外部储存设备，我们必须实现相应的驱动程序。特别的，这里我们实现了用户态驱动程序。
-	\item \textbf{文件系统结构}在本部分，我们实现磁盘上和操作系统中的文件系统结构，两者之间可以相互转化。特别的，我们引入了文件描述符等结构使操作系统可以抽象地表示文件。
-	\item \textbf{文件系统的用户接口}在本部分，我们提供接口和机制使得用户能够访问文件系统。在本实验中通过一个用户态的文件系统服务来实现。
+	\item \textbf{外部储存设备驱动}~通常，外部设备的操作需要通过按照一定操作序列读写特定的寄存器来实现。为了将这种操作转化为具有通用、明确语义的接口，我们必须实现相应的驱动程序。在本部分，我们实现了IDE磁盘的用户态驱动程序。
+	\item \textbf{文件系统结构}~在本部分，我们实现磁盘上和操作系统中的文件系统结构，并通过驱动程序实现文件系统操作相关函数。
+	\item \textbf{文件系统的用户接口}~在本部分，我们提供接口和机制使得用户程序能够使用文件系统，这主要通过一个用户态的文件系统服务来实现。同时，我们引入了文件描述符等结构使操作系统和用户程序可以抽象地操作文件而忽略其实际的物理表示。
 \end{enumerate}
 
 接下来我们一一详细解读这些部分的实现。
 
 \section{IDE磁盘驱动}
 
-为了在磁盘等外部设备上实现我们的文件系统，我们必须为这些外部设备编写驱动程序。实际上，我们的操作系统中已经实现了一些简单的驱动程序，那就是位于driver目录下的串口通信的驱动程序。在这个驱动程序中我们使用了内存映射I/O(MMIO)技术编写驱动。
+为了在磁盘等外部设备上实现我们的文件系统，我们必须为这些外部设备编写驱动程序。实际上，我们的操作系统中已经实现了一个简单的驱动程序，那就是位于driver目录下的串口通信的驱动程序。在这个驱动程序中我们使用了内存映射I/O(MMIO)技术编写驱动。
 
-本次要实现的硬盘驱动程序，同已经实现的串口驱动相比，相同的是我们同样使用MMIO技术编写磁盘的驱动；而不同之处在于，这次我们需要驱动的物理设备功能更加复杂，并且我们的驱动程序\textbf{完全运行在用户空间中}。
+本次要实现的硬盘驱动程序，同已经实现的串口驱动相比，相同的是我们同样使用MMIO技术编写磁盘的驱动；而不同之处在于，我们需要驱动的物理设备——IDE磁盘功能更加复杂，并且本次我们编写的驱动程序\textbf{完全运行在用户空间中}。
 
 \subsection{内存映射I/O}
 
@@ -68,14 +61,13 @@
 设备的说明，可以参考\href{http://gxemul.sourceforge.net/gxemul-stable/doc/experiments.html}{Gxemul
 Experimental Devices}。
 
-驱动程序访问的是IO空间，与一般我们说的内存空间是不同的。外设的IO空间地址是系统启动后才知道，CPU通常并没有为这些已
-知的外设I/O内存资源的物理地址预定义虚拟地址范围，所以驱动程序并不能直接通过物理地址访问I/O内存资源，而\textbf{必须
-将它们映射到内核虚地址空间内然后才能根据映射所得到的核心虚地址范围}，通过访存指令访问这些I/O内存资源。
+驱动程序访问的是I/O空间，与一般我们说的内存空间是不同的。外设的I/O空间地址是系统启动后才知道（具体讲，这个辛苦的工作是由BIOS完成后告知操作系统的），通常的体系结构（如x86）并没有为这些已知的外设I/O内存资源的物理地址预定义虚拟地址范围，所以驱动程序并不能直接通过物理地址访问I/O内存资源，而\textbf{必须将它们映射到内核虚地址空间内然后才能根据映射所得到的核心虚地址范围}，通过访存指令访问这些I/O内存资源。
 
-我们的操作系统内核中，将物理内存转换为内核虚拟地址，可以使用\mintinline{c}|KADDR|宏，也就是将物理地址加上
-\mintinline{c}|ULIM|的值(\mintinline{c}|0x80000000|)。
+幸运的是实验中使用的MIPS体系结构并没有复杂的I/O端口的概念，而是统一使用内存映射I/O的模型。MIPS的地址空间中，其在内核地址空间中（kseg0和kseg1段）实现了硬件级别的物理地址和内核虚拟地址的转换机制，其中，对kseg1段地址的读写是未缓存（uncached）的，即所有的操作不会写入高速缓存，这种可见性正是设备驱动所需要的。由于我们在模拟器上运行操作系统，I/O设备的物理地址是完全固定的。这样一来我们的驱动程序任务就转变成了简单的读写某些固定的内核虚拟地址。
 
-例如，Gxemul 提供的 console 设备的地址：0x10000000，设备寄存器映射如表\ref{lab5-table-console-mem-map}所示：
+我们的操作系统内核中，之前的操作钟，将物理内存转换为内核虚拟地址，都是转换到kseg0段的内核虚拟地址。使用的是\mintinline{c}|KADDR|宏，也就是将物理地址加上\mintinline{c}|ULIM|的值(\mintinline{c}|0x80000000|)。而正如我们上面提到的，编写设备驱动的时候我们需要将物理地址转换为kseg1段的内核虚拟地址，也就是将物理地址加上 kseg1 的偏移值(\mintinline{c}|0xA0000000|)。
+
+以我们编写完成的串口设备驱动为例，Gxemul 提供的 console 设备的地址：0x10000000，设备寄存器映射如表\ref{lab5-table-console-mem-map}所示：
 
 \begin{table}[htbp]
 \caption{Gexmul Console 内存映射}\label{lab5-table-console-mem-map}
@@ -95,7 +87,7 @@ Experimental Devices}。
 \end{tabular}
 \end{table}
 
-现在，我们通过往内存的 (0x10000000+0x80000000) 地址写入字符，就能在 shell 中看到对应的输出。
+现在，我们通过往内存的 (0x10000000+0xA0000000) 地址写入字符，就能在 shell 中看到对应的输出。
 \mintinline{c}|drivers/gxconsole/console.c|中的\mintinline{c}|printcharc|函数的实现如下所示：
 
 \begin{minted}[linenos]{c}
@@ -105,17 +97,21 @@ void printcharc(char ch)
 }
 \end{minted}
 
-而在本次实验中，我们需要编写的驱动完全位于用户空间，若是直接读写内核地址将会由处理器引发一个页错误（Pagefault)。所以我们对于设备的读写必须通过系统调用来实现。这里我们引入了sys_write_dev和sys_read_dev两个系统调用来实现设备的读写操作。
+而在本次实验中，我们需要编写IDE磁盘的驱动完全位于用户空间，用户态进程若是直接读写内核虚拟地址将会由处理器引发一个页错误（Pagefault)。所以我们对于设备的读写必须通过系统调用来实现。这里我们引入了sys\_write\_dev和sys\_read\_dev两个系统调用来实现设备的读写操作。这两个系统调用接受用户虚拟地址，和备的物理地址和读写的长度（按字节计数）作为参数，在内核空间中完成I/O操作。
+
+\begin{exercise}
+请根据 lib/syscall\_all.c 中的说明，完成 \mintinline{c}|sys_write_dev| 函数和 \mintinline{c}|sys_read_dev| 函数的，并且在 user/lib.h, user/syscall\_lib.c 中完成用户态的相应系统调用的接口。
+
+编写这两个系统调用时需要注意物理地址、用户进程虚拟地址同内核虚拟地址之间的转换。
+\end{exercise}
 
 \subsection{IDE磁盘}
 
-\begin{note}
-IDE 的英文全称为“Integrated Drive Electronics”，即“电子集成驱动器”，是目前最主流的硬盘接口， 也是光储类
-设备的主要接口。IDE接口，也称之为ATA接口。
-\end{note}
+在我们的操作系统实验中，我们使用的 Gxemul 模拟器提供的“磁盘”是一个 IDE 仿真设备，我们需要此基础上实现我们的文件系统，接下来，我们将了解一些读写 IDE 磁盘的基础知识。
 
-在我们的操作系统实验中，我们使用的 Gxemul 模拟器提供的“磁盘”是一个 IDE 
-仿真设备，我们需要此基础上实现我们的文件系统，接下来，我们将了解一些读写 IDE 磁盘的基础知识。
+\begin{note}
+IDE 的英文全称为“Integrated Drive Electronics”，即“电子集成驱动器”，是目前最主流的硬盘接口， 也是光储类设备的主要接口。IDE接口，也称之为ATA接口。
+\end{note}
 
 \subsubsection{磁盘的物理结构}
 
@@ -139,10 +135,10 @@ IDE 的英文全称为“Integrated Drive Electronics”，即“电子集成驱
 
 \subsubsection{IDE磁盘操作}
 
-磁盘的访问跟 Console 类似，也是将要用到的磁盘设备的 I/O 寄存器映射到制定的虚存地址。前文中我们提到过，扇区(Sector)
+前文中我们提到过，扇区(Sector)
 是磁盘读写的基本单位，Gxemul 也提供了对扇区进行操作的基本方法。
 
-Gexmul 提供的 Simulated IDE disk 的地址是 0x13000000，I/O寄存器相对于 \mintinline{c}|0x13000000| 的偏
+Gxemul 提供的 Simulated IDE disk 的地址是 0x13000000，I/O寄存器相对于 \mintinline{c}|0x13000000| 的偏
 移和对应的功能如表\ref{lab5-table-disk-mem-map}所示：
 
 \begin{table}[htbp]
@@ -169,85 +165,57 @@ Gexmul 提供的 Simulated IDE disk 的地址是 0x13000000，I/O寄存器相对
 
 \subsection{驱动程序编写}
 
-通过对\mintinline{c}|printcharc| 函数的实现的分析，我们已经掌握了I/O操作的基本方法，那么，读写 IDE disk 
-的相关代码也就不难理解了。以从硬盘上读取一些 Sectors 为例，涉及到的函数有 \mintinline{c}|fs/ide.c| 中的 
-\mintinline{c}|ide_read| 函数和 \mintinline{c}|fs/ide_asm.S|中的 \mintinline{c}|read_sector| 函数。
-具体代码如下：
+通过对\mintinline{c}|printcharc| 函数的实现的分析，我们已经掌握了I/O操作的基本方法，那么，读写 IDE 磁盘的相关代码也就不难理解了。以从硬盘上读取一些 Sectors 为例，我们首先考虑一个\textbf{内核态的驱动}是如何编写的：
 
-\mintinline{c}|ide_read| 函数：
+\mintinline{c}|read_sector| 函数：
 
 \begin{minted}[linenos]{c}
 extern int read_sector(int diskno, int offset);
-
-void ide_read(u_int diskno, u_int secno, void *dst, u_int nsecs)
-{
-    // 0x200: the size of a sector: 512 bytes.
-    int offset_begin = secno * 0x200;
-    int offset_end = offset_begin + nsecs * 0x200;
-    int offset = 0;
-
-    while (offset_begin + offset < offset_end) {
-        if (read_sector(diskno, offset_begin + offset)) {
-            // copy data from disk buffer(512 bytes, a sector) to destination array.
-            user_bcopy((void *)0x93004000, dst + offset, 0x200);
-            offset += 0x200;
-        } else {
-            // error occurred, then panic.
-            user_panic("disk I/O error");
-        }
-    }
-}
 \end{minted}
 
-\mintinline{c}|read_sector| 函数：
 
 \begin{minted}[linenos]{asm}
 # read sector at specified offset from the beginning of the disk image.
 LEAF(read_sector)
-    sw  a0, 0x93000010  # select the IDE id.
-    sw  a1, 0x93000000  # offset.
+    sw  a0, 0xB3000010  # select the IDE id.
+    sw  a1, 0xB3000000  # offset.
     li  t0, 0
-    sb  t0, 0x93000020  # start read.
-    lw  v0, 0x93000030
+    sb  t0, 0xB3000020  # start read.
+    lw  v0, 0xB3000030
     nop
     jr  ra
     nop
 END(read_sector)
 \end{minted}
 
-我们来分析这两段代码。当需要从磁盘的指定位置读取一个 sector 时，需要调用 \mintinline{c}|read_sector|
-函数来将磁盘中对应sector 的数据读到设备缓冲区中。\textbf{所有的地址操作都需要将物理地址转换成内核虚拟地址}。
-根据Gxemul提供的与 ide disk 相关的数据表格，首先，设置 IDE disk 的 ID，从
+我们来分析这段代码。当需要从磁盘的指定位置读取一个 sector 时，需要调用 \mintinline{c}|read_sector|
+函数来将磁盘中对应sector 的数据读到设备缓冲区中。\textbf{所有的地址操作都需要将物理地址转换成内核虚拟地址}。这里的设备基地址对应的kseg1的内核虚拟地址是0xB3000000。
+根据Gxemul提供的与 IDE disk 相关的数据表格，首先，设置 IDE disk 的 ID，从
 \mintinline{c}|read_sector| 函数的声明 \mintinline[breaklines]{c}|extern int read_sector(int diskno, int offset);|
-中可以看出，diskno 是第一个参数，对应的就是 \$a0 寄存器的值，因此，将其写入到 0x93000010 处，这样就表示
+中可以看出，diskno 是第一个参数，对应的就是 \$a0 寄存器的值，因此，将其写入到 0xB3000010 处，这样就表示
 我们将使用编号为 \$a0 的磁盘。我们的试验中，只使用了一块 simulated IDE disk, 因此，这个值应该为 0。
-接下来，将相对于磁盘起始位置的 offset 写入到 0x93000000 位置，表示在距离磁盘起始处 offset 的位置开始
-进行磁盘操作。然后，根据 Gxemul 的 data sheet，向内存 0x93000020 处写入 0 来开始读磁盘（如果是写磁盘，则写
+接下来，将相对于磁盘起始位置的 offset 写入到 0xB3000000 位置，表示在距离磁盘起始处 offset 的位置开始
+进行磁盘操作。然后，根据 Gxemul 的 data sheet，向内存 0xB3000020 处写入 0 来开始读磁盘（如果是写磁盘，则写
 入 1）。
-最后，将磁盘操作的状态码放入 \$v0 中，作为结果返回给 \mintinline{c}|ide_read| 函数。
-在 \mintinline{c}|ide_read| 函数中，我们通过判断 \mintinline{c}|read_sector| 函数的返回值，
-就可以知道读取磁盘的操作是否成功。如果成功，将这个 sector 的数据(512 bytes) 从设备缓冲区 (0x4000-0x41ff) 
-中拷贝到目的位置(此处的 \mintinline{c}|void *dst|)。至此，我们就完成了对磁盘的读操作。
+最后，将磁盘操作的状态码放入 \$v0 中，作为结果返回。在外层的函数中，我们通过判断 \mintinline{c}|read_sector| 函数的返回值，就可以知道读取磁盘的操作是否成功。如果成功，将这个 sector 的数据(512 bytes) 从设备缓冲区 (offset 0x4000-0x41ff) 中拷贝到目的位置。至此，我们就完成了对磁盘的读操作。
 
-写磁盘的操作与读磁盘的一个区别在于写磁盘需要先将要写入对应 sector 的 512 bytes 的数据放入设备缓冲中，然后向地
-址 0x93000020处写入 1 来启动操作，并从 0x93000030 处获取写磁盘操作的返回值。
+写磁盘的操作与读磁盘的一个区别在于写磁盘需要先将要写入对应 sector 的 512 bytes 的数据放入设备缓冲中，然后向地址 0xB3000020处写入 1 来启动操作，并从 0xB3000030 处获取写磁盘操作的返回值。
+
+相应的，\textbf{用户态磁盘驱动}使用系统调用代替直接对物理地址的读写，完成寄存器配置和数据拷贝等功能。
 
 \begin{exercise}
-参考 \mintinline{c}|ide_read| 函数和 \mintinline{c}|read_sector| 函数的实现方式，实现 fs/ide.c 中
-的 \mintinline{c}|ide_write| 函数，以及 fs/ide\_asm.S 中的 \mintinline{c}|write_sector| 函数，
-实现对磁盘的写操作。
+参考这个内核态驱动，完成 fs/ide.c 中的 \mintinline{c}|ide_write| 函数，以及 \mintinline{c}|ide_read| 函数，实现对磁盘的读写操作。
 \end{exercise}
 
 \section{文件系统结构}
 实现了IDE磁盘的驱动，我们就有了在磁盘上实现文件系统的基础。接下来我们设计整个文件系统的结构，并在磁盘和操作系统中分别实现对应的结构。
-\todo{明确区分磁盘结构/操作系统结构 on disk vs in memory}
 
 \begin{note}
 Unix/Linux操作系统一般将磁盘分成两个区域：inode 区域和 data 区域。inode 区域用来保存文件的状态属性，
 以及指向数据块的指针。data 区域用来存放文件的内容和目录的元信息(包含的文件)。我们实验使用的操作系统的文件系统也采用类似的设计。
 \end{note}
 
-\subsection{磁盘布局}
+\subsection{磁盘文件系统布局}
 
 磁盘空间的基本布局如图\ref{lab5-pic-2}所示。
 
@@ -283,12 +251,8 @@ struct Super {
 
 接下来，我们来学习如何使用 bitmap 来标识磁盘中的所有块的使用情况。
 
-\todo{思考题}
-\begin{note}
-	fs/fsformat 是用于创建符合我们定义的文件系统结构的工具，用于将多个文件按照我们的内核所定义的文件系统写入到磁盘镜像中。请参考 fs/fsformat.c 和 fs/Makefile，思考 fsformat 是如何将文件放入文件系统的。
-\end{note}
-
-这里我们参考 fs/fsformat 表述文件系统标记空闲块的机制。在写入文件之前，我们将所有的块全部都标为空闲块：
+tools/fsformat 是用于创建符合我们定义的文件系统结构的工具，用于将多个文件按照我们的内核所定义的文件系统写入到磁盘镜像中。
+这里我们参考 tools/fsformat 表述文件系统标记空闲块的机制。在写入文件之前，我们将所有的块全部都标为空闲块：
 
 \begin{minted}[linenos]{c}
     nbitblock = (nblock + BIT2BLK - 1) / BIT2BLK;
@@ -353,7 +317,7 @@ free_block(u_int blockno)
   \caption{文件控制块}\label{lab5-pic-3}
 \end{figure}
 
-对应的文件控制块的定义：
+对应的内存中的文件控制块的定义：
 
 \begin{minted}[linenos]{c}
 // file control blocks, defined in include/fs.h
@@ -389,19 +353,18 @@ File 结构体中有一个域为 \mintinline{c}|f_indirect|，只想一个间接
 查找代码中的相关定义，试回答一个磁盘块中最多能存储多少个文件控制块？一个目录最多能有多少个子文件？
 \end{thinking}
 
-\begin{exercise}
-补完 \mintinline{c}|dir_lookup| 函数，查找某个目录下是否存在指定的文件。（提示：使用\mintinline{c}|file_get_block|可以将某个指定文件指向的磁盘块读入内存）。
-\end{exercise}
-
 为了更加细致地了解文件系统的内部结构，我们使用 C 语言程序（fs/fsformat.c）来模拟对磁盘的操作，掌握如何将文件
-和文件夹按照文件系统的格式写入磁盘，我们也正是通过 fsformat 程序来创建一个磁盘文件 fs/fs.img 供内核使用。请
-阅读 fs/fsformat.c 中的代码，掌握文件系统结构的具体细节。感兴趣的同学，可以参考 \mintinline{c}|write_file|
-函数的实现，完成\mintinline{c}|write_directory| 函数，实现将一个指定目录下的文件按照目录结构写入到
-fs/fs.img 的根目录下。
+和文件夹按照文件系统的格式写入磁盘，我们也正是通过 fsformat 程序来创建一个磁盘文件 fs/fs.img 供内核使用。请阅读 fs/fsformat.c 中的代码，掌握文件系统结构的具体细节。
+
+\begin{exercise}
+请文件系统的设计，完成fsformat.c中的 \mintinline{c}|write_file|函数，并按照个人兴趣完成 \mintinline{c}|write_directory| 函数（不作为考察点），实现将一个文件或指定目录下的文件按照目录结构写入到 fs/fs.img 的根目录下的功能。关于如何创建二进制文件的镜像，请参考 fs/Makefile。
+
+在实现的过程中，你可以将你的实现同我们给出的参考可执行文件 tools/fsformat 进行对比。具体来讲，你可以通过Linux提供的 xxd 命令将两个 fsformat 产生的二进制镜像转化为可阅读的文本文件，手工进行查看或使用 diff 等工具进行对比。
+\end{exercise}
 
 \subsection{块缓存}
 
-块缓存指的是借助虚拟内存来实现磁盘块缓存的设计。我们的操作系统中，文件系统是一个用户进程，一个进程可以拥有 4G 
+块缓存指的是借助虚拟内存来实现磁盘块缓存的设计。我们的操作系统中，文件系统服务是一个用户进程（将在下文介绍），一个进程可以拥有 4G 
 的虚拟内存空间，将 \mintinline{c}|DISKMAP| 到 \mintinline{c}|DISKMAP+DISKMAX| 这一段虚存地址空间
 (0x10000000-0xcffffff) 作为缓冲区，当磁盘读入内存时，用来映射相关的页。\mintinline{c}|DISKMAP| 和
 \mintinline{c}|DISKMAX| 的值定义在 fs/fs.h 中：
@@ -443,16 +406,19 @@ fs/fs.c 中的 diskaddr 函数用来计算指定磁盘块对应的虚存地址�
 函数将指定编号的磁盘块都入到内存中，首先检查这块磁盘块是否已经在内存中，如果不在，先分配一页物理内存，然后调用
 \mintinline{c}|ide_read| 函数来读取磁盘上的数据到对应的虚存地址处。
 
+在完成块缓存系统之后我们就可以实现从操作系统的文件系统操作函数：
 
+\begin{exercise}
+补完 \mintinline{c}|dir_lookup| 函数，查找某个目录下是否存在指定的文件。（提示：使用\mintinline{c}|file_get_block|可以将某个指定文件指向的磁盘块读入内存）。
+\end{exercise}
 
 \section{文件系统的用户接口}
 
-文件系统在建立之后，需要向用户提供相关的接口使用。这个过程中，不仅涉及了不同进程之间通信的问题，也涉及了文件系统如何隔离底层的文件系统实现，抽象地表示一个文件的问题。
+文件系统在建立之后，需要向用户提供相关的接口使用。我们实验使用的操作系统内核符合一个典型的微内核的设计，文件系统属于用户态进程，以服务的形式供其他进程调用。这个过程中，不仅涉及了不同进程之间通信的问题，也涉及了文件系统如何隔离底层的文件系统实现，抽象地表示一个文件的问题。首先，我们引入文件描述符（file descriptor）作为用户程序管理、操作文件资源的方式。
 
 \subsection{文件描述符}
 
-\todo{思考题：为什么需要文件描述符：资源标识符。统一的手段描述文件。包括多个指向一个等的问题。}
-当用户进程试图打开一个文件时，需要一个文件描述符（file descriptor）来存储文件的基本信息。当用户进程相文件系统发送打开文件的请求时，文件系统进程会将这些基本信息记录在内存中，然后由操作系统将用户进程请求的地址映射到同一个物理页上，因此一个文件描述符至少需要独占一页的空间。当用户进程获取了文件大小等基本信息后，再次向文件系统发送请求将文件内容映射到指定内存空间中。
+当用户进程试图打开一个文件时，需要一个文件描述符来存储文件的基本信息和用户进程中关于文件的状态；同时，文件描述符也起到描述用户对于文件操作的作用。当用户进程相文件系统发送打开文件的请求时，文件系统进程会将这些基本信息记录在内存中，然后由操作系统将用户进程请求的地址映射到同一个物理页上，因此一个文件描述符至少需要独占一页的空间。当用户进程获取了文件大小等基本信息后，再次向文件系统发送请求将文件内容映射到指定内存空间中。
 
 \begin{thinking}\label{think-Filefd-Fd}
 阅读 user/file.c 中的众多代码，发现很多函数中都会将一个 struct Fd * 型的指针转换为 struct Filefd * 型的指针，请解释为什么这样的转换可行。
@@ -472,14 +438,11 @@ fs/fs.c 中的 diskaddr 函数用来计算指定磁盘块对应的虚存地址�
 参考user/fd.c中的 \mintinline{c}|write| 函数，完成 \mintinline{c}|read| 函数。
 \end{exercise}
 
-\todo{思考题: 请解释 File, Fd, Filefd, Open 结构体及其各个域的作用。比如各个结构体会在哪些过程中被使用，是否对应磁盘上的物理实体还是单纯的内存数据等。说明形式自定，要求简洁明了，可大致勾勒出文件系统数据结构与物理实体的对应关系与设计框架。}
+% \todo{思考题: 请解释 File, Fd, Filefd, Open 结构体及其各个域的作用。比如各个结构体会在哪些过程中被使用，是否对应磁盘上的物理实体还是单纯的内存数据等。说明形式自定，要求简洁明了，可大致勾勒出文件系统数据结构与物理实体的对应关系与设计框架。}
 
 \subsection{文件系统服务}
 
-我们实验使用的操作系统内核符合一个典型的微内核的设计，文件系统属于用户态进程，以服务的形式通过 IPC 供其他进程调用，
-进行文件读写操作。具体来说，在内核开始运行时，就启动了文件系统服务进程 \mintinline{c}|ENV_CREATE(fs_serv)|，
-用户进程需要进行文件操作时，使用 \mintinline{c}|ipc_send/ipc_recv| 与 \mintinline{c}|fs_serv| 进行
-交互，完成操作。
+我们的操作系统中的文件系统服务通过 IPC 的形式供其他进程调用，进行文件读写操作。具体来说，在内核开始运行时，就启动了文件系统服务进程 \mintinline{c}|ENV_CREATE(fs_serv)|，用户进程需要进行文件操作时，使用 \mintinline{c}|ipc_send/ipc_recv| 与 \mintinline{c}|fs_serv| 进行交互，完成操作。
 在文件系统服务进程的初始化函数中，首先调用了 \mintinline{c}|serv_init| 函数准备好全局的文件打开记录表
 \mintinline{c}{opentab}，然后调用 \mintinline{c}|fs_init| 函数来初始化文件系统。\mintinline{c}|fs_init|
 函数首先通过读取超级块的内容获知磁盘的基本信息，然后检查磁盘是否能够正常读写，最后调用 \mintinline{c}|read_bitmap|
@@ -522,8 +485,6 @@ fs/fs.c 中的 diskaddr 函数用来计算指定磁盘块对应的虚存地址�
 %在实现了文件系统之前，操作系统内核是如何定位“文件”的呢？
 %在实现了文件系统之后，文件是被怎样装入文件系统的镜像之中的呢？
 
-\todo{填写fsformat.c}
-
 \section{正确结果展示}
 
 在 init/init.c 中启动一个 fstest 进程和文件系统服务进程：
@@ -533,7 +494,7 @@ fs/fs.c 中的 diskaddr 函数用来计算指定磁盘块对应的虚存地址�
     ENV_CREATE(fs_serv);
 \end{minted}
 
-就能开始对文件系统的检测，运行文件系统服务，等待应用程序的请求。
+就能开始对文件系统的检测，运行文件系统服务，等待应用程序的请求。注意到我们必须将文件系统进程作为一号进程启动，其原因是我们在user/fsipc.c 中定义的文件系统ipc请求的目标 env\_id 为1。
 
 \begin{note}
 使用 gxemul –E testmips –C R3000 –M 64 -d gxemul/fs.img elf-file 运行 (其中 elf-file 是你编译生成的 vmlinux 文件的路径)。 
@@ -579,7 +540,7 @@ file rewrite is good
 
 \section{挑战性任务}
 
-本文中的用户态驱动部分使用了系统调用来实现了读写特定的内存地址（即设备的MMIO内存地址），有着一定的安全风险的同时有违微内核的设计思路。在微内核设计领域，针对这一问题已经提出了内存控制、权限分派、IPC转发等等的解决方案。请你调研相关资料，修改系统调用或编写新的系统调用使得 \textbf{1)} 只有文件系统进程能读写IDE磁盘。 \textbf{2)} 文件系统进程仅能读写IDE磁盘而不能读写其他的内核地址。
+本文中的用户态驱动部分使用了系统调用来实现了读写特定的内存地址（即设备的MMIO内存地址），文件系统进程也使用了固定的进程号来标识。这种设计有着一定的安全风险的同时有违微内核的设计思路。在微内核设计领域，针对这一问题已经提出了内存控制、权限分派、IPC转发等等的解决方案。请你调研相关资料，修改系统调用或编写新的系统调用使得 \textbf{1)} 只有文件系统进程能读写IDE磁盘。 \textbf{2)} 文件系统进程仅能读写IDE磁盘而不能读写其他的内核地址。
 
 
 
