@@ -616,6 +616,13 @@ lw      sp, TF_REG29(sp)
 父进程还需要为子进程通过类似于set\_pgfault\_handler函数的方式，用若干系统调用分配子进程的异常处理栈以及设置
 处理函数为\_\_asm\_pgfault\_handler。
 
+最后父进程通过系统调用syscall\_set\_env\_status设置子进程为可以运行的状态。在实现内核sys\_set\_env\_status函
+数时，不仅需要设置进程控制块的env\_status域，还需要在status为RUNNABLE时将进程加入可以调度的链表。
+
+\begin{exercise}
+填写 lib/syscall\_all.c 中的 sys\_set\_env\_status 函数
+\end{exercise}
+
 说到这里我们需要整理一下思路，fork中父进程在syscall\_env\_alloc后还需要做的事情有：
 \textbf{地址空间的遍历以及duppage}、\textbf{分配子进程的异常处理栈}、\textbf{设置子进程的处理函数}、
 \textbf{设置子进程的运行状态}。最后再将子进程的envid返回就大功告成了。
