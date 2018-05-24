@@ -50,6 +50,8 @@
   \end{itemize}
   \item env\_pgdir : 这个变量保存了该进程页目录的虚拟地址。
   \item env\_cr3 : 这个变量保存了该进程页目录的物理地址。
+  \item env\_sched\_link : 这个变量来构造就绪状态进程链表。
+  \item env\_pri :  这个变量保存了该进程的优先级。
 \end{itemize}
 
 这里值得强调的一点就是\textbf{ENV\_RUNNABLE 状态并不代表进程一定在运行中，它也可能正处于调度队列中}。
@@ -71,13 +73,35 @@
 当然我们光有了存储进程控制块信息的envs还不够，我们还需要像lab2一样将空闲的env控制块按照链表形式“串”起来，便于后续分配ENV结构体对象，形成env\_free\_list。一开始我们的所有进程控制块都是空闲的，所以我们要把它们都“串”到env\_free\_list上去。
 
 \begin{exercise}
-仔细阅读注释，填写\textbf{env\_init}函数，注意要按照逆序插入(函数位于lib/env.c中)。
+仔细阅读注释，填写\textbf{env\_init}函数，注意链表插入的顺序(函数位于lib/env.c中)。
 \end{exercise}
 
-在填写完env\_init函数后，我们对于envs的操作暂时就告一段落了，不过我们还有一个小问题没解决，注释里说明了要逆序插入，但是为什么呢？我们需要你来仔细思考，注释中已经给出了提示。
+在填写完env\_init函数后，我们对于envs的操作暂时就告一段落了，不过我们还有一个小问题没解决，为什么严格规定链表的插入顺序？我们需要你来仔细思考，注释中已经给出了提示。
 
 \begin{thinking}\label{think-env_init}
-为什么我们在构造空闲进程链表时使用了逆序插入的方式？
+    为什么我们在构造空闲进程链表时必须使用特定的插入的顺序？(顺序或者逆序)
+\end{thinking}
+
+\subsection{进程的标识}
+
+你的电脑中经常有很多进程同时存在，每个进程执行不同的任务，他们之间也经常需要相互协作、通信，那操作系统是如何识别每个进程呢？
+
+在上一部分中，我们了解到每个进程的信息存储在该进程对应的进程控制块中，细心的你一定已经发现struct Env中的env\_id这个域，它就是每个进程独一无二的标识符。我们在创建每个新的进程的时候必须为它赋予一个与众不同的id来作为它的标识符。
+
+你可以在env.c文件中找到一个叫做mkenvid的函数，它的作用就是生成一个新的进程id。
+
+如果我们知道一个进程的id，那么如何才能找到该id对应的进程控制块呢？
+
+\begin{exercise}
+仔细阅读注释，完成env.c/envid2env函数，实现通过一个env的id获取该id对应的进程控制块的功能。
+\end{exercise}
+
+\begin{thinking}\label{think-mkenvid}
+思考env.c/mkenvid函数和envid2env函数:
+\begin{itemize}
+    \item 请你谈谈对mkenvid函数中生成id的运算的理解，为什么这么做？
+    \item 为什么envid2env中需要判断e->env\_id != envid 的情况？如果没有这步判断会发生什么情况？
+\end{itemize}
 \end{thinking}
 
 \subsection{设置进程控制块}
@@ -103,30 +127,15 @@
 
 相信你一眼看到第三条注释的时候一定会吐槽：“什么鬼，什么叫合适的值啊”。淡定，先别着急吐槽，先花半分钟的时间看一下第二条注释。
 
-下面这个函数就是你在第二步中要使用的函数。在用之前，我们希望你仔细看注释，并对这个函数进行一些思考。
+env.c中的env\_setup\_vm函数就是你在第二步中要使用的函数，该函数的作用是初始化新进程的地址空间。在使用该函数之前，我们必须先完成这个函数，这部分任务是这次试验的难点之一。
 
-\begin{codeBoxWithCaption}{地址空间初始化\label{code:env_setup_vm.c}}
-  \inputminted[linenos]{c}{codes/env_setup_vm.c}
-\end{codeBoxWithCaption}
+%\begin{codeBoxWithCaption}{地址空间初始化\label{code:env_setup_vm.c}}
+ % \inputminted[linenos]{c}{codes/env_setup_vm.c}
+%\end{codeBoxWithCaption}
 
-请在仔细看完上述函数的注释和其中的Hint后，来思考一下下面这些为你准备的问题
+在你动手开始完成env\_setup\_vm之前，为了便于理解你需要在这个函数中所做的事情，请先阅读以下提示:
 
-\begin{thinking}\label{think-env_setup_vm}
-思考env\_ setup\_ vm函数：
-\begin{itemize}
-\item 第三点注释中的问题:为什么我们要执行\mintinline{c}|pgdir[i] = boot_pgdir[i]|这个赋值操作？换种说法，我们为什么要使用\mintinline{c}|boot_pgdir|作为一部分模板？(提示:mips虚拟空间布局)
-\item {\small UTOP}和{\small ULIM}的含义分别是什么，在{\small UTOP}到{\small ULIM}的区域与其他用户区相比有什么最大的区别？
-\item (选做)我们为什么要让\mintinline{c}|pgdir[PDX(UVPT)]=env_cr3?|(提示:结合系统自映射机制)
-\end{itemize}
-\end{thinking}
-
-其实第三点注释问题本身要思考起来是有比较大跨度的，所以我们直接在这里给出笔者在反复思考与理解后所获得的心得，
-鼓励你在写文档时可以进行更多思考与更深层的理解：）。
-
-在我们的实验中，对于不同的进程而言，虚拟地址ULIM以上的地方，虚拟地址到物理地址的映射关系都是一样的。
-因为这2G虚拟空间，不是由哪个进程管理的，而是由内核管理的！如果你仔细思索这句话，
-可能会产生疑惑：“那为什么不能该内核管的时候让内核进程去管，该普通进程管的时候给普通进程去管,
-非要混在一个地址空间里搞来搞去的呢？”这种想法是很好的，但是问题来了，在我们这种布局模式下，
+在我们的实验中，对于不同的进程而言，虚拟地址ULIM以上的地方，虚拟地址到物理地址的映射关系都是一样的。因为这2G虚拟空间，不是由哪个进程管理的，而是由内核管理的！如果你仔细思索这句话,可能会产生疑惑：“那为什么不能该内核管的时候让内核进程去管，该普通进程管的时候给普通进程去管,非要混在一个地址空间里搞来搞去的呢？”这种想法是很好的，但是问题来了，在我们这种布局模式下，
 有严格意义上的内核进程吗？
 
 答案当然是否定的，这里我们要再讲清楚几个概念，方可解决这个问题。
@@ -171,8 +180,23 @@ mips汇编中使用一些特权指令如\mintinline{gas}|mtc0|、\mintinline{gas
   \caption{进程页表与内核页表的关系}\label{fig:Process} 
 \end{figure}
 
+好的，现在结合注释你已经可以开始动手完成env\_setup\_vm函数了。
 
-在上述的思考完成后，那么我们就可以直接在\textbf{env\_alloc} 第二步直接使用该函数了。
+\begin{exercise}
+    仔细阅读注释，填写env\_setup\_vm函数
+\end{exercise}
+
+\begin{thinking}\label{think-env_setup_vm}
+结合include/mmu.h中的地址空间布局，思考env\_setup\_vm函数：
+\begin{itemize}
+\item 我们在初始化新进程的地址空间时为什么不把整个地址空间的pgdir都清零，而是复制内核的\mintinline{c}|boot_pgdir|作为一部分模板？(提示:mips虚拟空间布局)
+\item {\small UTOP}和{\small ULIM}的含义分别是什么，在{\small UTOP}到{\small ULIM}的区域与其他用户区相比有什么最大的区别？
+\item 在step4中我们为什么要让\mintinline{c}|pgdir[PDX(UVPT)]=env_cr3?|(提示:结合系统自映射机制)
+\item 谈谈自己对进程中物理地址和虚拟地址的理解
+\end{itemize}
+\end{thinking}
+
+在上述的思考完成后，那么我们就可以直接在\textbf{env\_alloc} 第二步使用该函数了。
 现在来解决一下刚才的问题，第三点所说的合适的值是什么？我们要设定哪些变量的值呢？
 
 我们要设定的变量其实在\textbf{env\_alloc} 函数的提示中已经说的很清楚了，至于其合适的值，
@@ -261,8 +285,8 @@ The Return From Exception instruction writes the previous flags to the current f
 为了完成这个函数，我们接下来再补充一点关于ELF的知识。
 
 前面在讲解内核加载的时候，我们曾简要说明过ELF的加载过程。这里，我们再做一些补充说明。要想正确加载一个ELF文件到内存，
-只需将ELF文件中所有需要加载的segment加载到对应的虚地址上即可。为了降低难度，我们已经写好了用于解析ELF文件的代码
-(lib/kernel\_elfloader.c)，你可以直接调用相应函数获取ELF文件的各项信息，并完成加载过程。该函数的原型如下：
+只需将ELF文件中所有需要加载的segment加载到对应的虚地址上即可。我们已经写好了用于解析ELF文件的代码
+(lib/kernel\_elfloader.c)中的大部分内容，你可以直接调用相应函数获取ELF文件的各项信息，并完成加载过程。该函数的原型如下：
 
 \begin{minted}[linenos]{c}
 // binary为整个待加载的ELF文件。size为该ELF文件的大小。
@@ -279,7 +303,7 @@ load\_elf()函数只完成了解析ELF文件的部分，而把将ELF文件的各
 你的自定义函数完成加载单个segment的过程。
 
 为了进一步简化你的理解难度，我们已经为你定义好了这个“自定义函数”的框架。如代码\ref{code:load_icode_mapper.c}所示。
-load\_elf()函数会从ELF文件文件中解析出每个segment的四个信息：va(该段需要被加载到的虚地址)、sgsize(该段在内存中的大小)、
+load\_elf()函数会从ELF文件中解析出每个segment的四个信息：va(该段需要被加载到的虚地址)、sgsize(该段在内存中的大小)、
 bin(该段在ELF文件中的内容)、bin\_size(该段在文件中的大小)，并将这些信息传给我们的“自定义函数”。
 
 接下来，你只需要完成以下两个步骤：
@@ -301,8 +325,12 @@ bin(该段在ELF文件中的内容)、bin\_size(该段在文件中的大小)，�
 思考完这一点，我们就可以进入这一小节的练习部分了。
 
 \begin{exercise}
-通过上面补充的知识与注释，填充 \textbf{load\_ icode\_ mapper} 函数。
+通过上面补充的知识与注释，填充 \textbf{load\_icode\_mapper} 函数。
 \end{exercise}
+
+\begin{thinking}\label{think-load-icode}
+    结合load\_icode\_mapper的参数以及二进制镜像的大小，考虑该函数可能会面临哪几种复制的情况？你是否都考虑到了？
+\end{thinking}
 
 现在我们已经完成了补充部分最难的一个函数，那么下面我们完成这个函数后，
 就能真正实现把二进制镜像加载进内存的任务了。
@@ -315,12 +343,12 @@ bin(该段在ELF文件中的内容)、bin\_size(该段在文件中的大小)，�
 在第二步我们要用第一步申请的页面来初始化一个进程的栈，根据注释你应当可以轻松完成。
 这里我们只讲第三步的注释所代表的内容，其余你可以根据注释中的提示来完成。
 
-第三步通过调用我们预先为你准备好的load\_elf()函数来将ELF文件真正加载到内存中。
+第三步通过调用load\_elf()函数来将ELF文件真正加载到内存中。
 这里仅做一点提醒：请将load\_icode\_mapper()这个函数作为参数传入到load\_elf()中。
 其余的参数在前面已经解释过了，就不再赘述了。
 
 \begin{exercise}
-通过补充的ELF知识与注释，填充 \textbf{load\_ icode} 函数。
+    通过补充的ELF知识与注释，填充 \textbf{load\_elf} 函数和\textbf{load\_icode} 函数。
 \end{exercise}
 
 这里的\mintinline{c}|e->env_tf.pc|是什么呢？就是在我们计组中反复强调的甚为重要的\mintinline{c}|PC|。
@@ -333,7 +361,6 @@ bin(该段在ELF文件中的内容)、bin\_size(该段在文件中的大小)，�
   \begin{itemize}
   \item 我们这里出现的"指令位置"的概念，你认为该概念是针对虚拟空间，还是物理内存所定义的呢？
   \item 你觉得\mintinline{c}|entry_point|其值对于每个进程是否一样？该如何理解这种统一或不同？
-  \item 从布局图中找到你认为最有可能是\mintinline{c}|entry_point|的值。
   \end{itemize}
 \end{thinking}
 
@@ -344,10 +371,20 @@ bin(该段在ELF文件中的内容)、bin\_size(该段在文件中的大小)，�
 创建进程的过程很简单，就是实现对上述个别函数的封装，\textbf{分配一个新的Env结构体，设置进程控制块，并将二进制代码载入到对应地址空间}即可完成。好好思考上面的函数，我们需要用到哪些函数来做这几件事？
 
 \begin{exercise}
-根据提示，完成 \textbf{env\_create} 函数的填写。
+根据提示，完成 \textbf{env\_create} 函数与 \textbf{env\_create\_priority} 的填写。
 \end{exercise}
 
 当然提到创建进程，我们还需要提到一个封装好的宏命令
+
+\begin{minted}[linenos]{c}
+#define ENV_CREATE_PRIORITY(x, y) \
+{ \
+    extern u_char binary_##x##_start[];\
+    extern u_int binary_##x##_size; \
+    env_create_priority(binary_##x##_start, \
+        (u_int)binary_##x##_size, y); \
+}
+\end{minted}
 
 \begin{minted}[linenos]{c}
 #define ENV_CREATE(x) \
@@ -373,8 +410,8 @@ int main()
 好，那么现在我们就得手工在我们的\mintinline{c}|init/init.c|里面加两句话来初始化创建两个进程
 
 \begin{minted}[linenos]{c}
-ENV_CREATE(user_A);
-ENV_CREATE(user_B);
+ENV_CREATE_PRIORITY(user_A, 2);
+ENV_CREATE_PRIORITY(user_B, 1);
 \end{minted}
 
 这两句话加在哪里呢？那就需要你翻代码来寻找啦～
@@ -629,7 +666,8 @@ void *set_except_vector(int n, void *addr)
 
 通过上面的描述，我们知道了，其实在时钟中断产生时，最终是调用了sched\_ yield函数来进行进程的调度，
 这个函数在\mintinline{c}|lib/sched.c|中所定义。这个函数就是我们本次最后要写的调度函数。
-调度的算法很简单，就是时间片轮转的算法，没有优先级，根据注释就可以轻松写出。
+调度的算法很简单，就是时间片轮转的算法。这里优先级就有用了，我们在这里将优先级设置为时间片大小: 1 表示 1 个时间片长度,  2 表示 2 个时间片长度，
+以此类推。不过寻找就绪状态进程不是简单遍历进程链表, 而是用两个链表存储所有就绪状态进程。每当一个进程状态变为 ENV\_RUNNABLE ,我们要将其插入第一个就绪状态进程链表。调用 sched\_yield 函数时, 先判断当前时间片是否用完。如果用完, 将其插入另一个就绪状态进程链表。之后判断当前就绪状态进程链表是否为空。如果为空, 切换到另一个就绪状态进程链表。
 
 \begin{exercise}
 根据注释，完成 \textbf{sched\_yield }函数的补充。
@@ -656,20 +694,23 @@ pmap.c:  mips vm init success
 panic at init.c:27: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 \end{minted}
 
-当然不会这么整齐，且没有换行，只是交替输出2和1而已～当然还不能放过你，你还需要再思考一部分内容
+当然不会这么整齐，且没有换行，只是交替输出2和1而已～ 不过 1 的个数几乎是 2 的 2倍。 当然还不能放过你，你还需要再思考一部分内容
 
 \begin{thinking}\label{think-调度}
-思考一下你的调度程序，这种调度方式由于某种不可避免的缺陷而造成对进程的不公平。
+思考一下你的调度程序，为什么输出 1 的个数不是恰好 2 的个数的 2 倍。
   \begin{itemize}
-    \item 这种不公平是如何产生的？
-    \item 如果实验确定只运行两个进程，你如何改进可以降低这种不公平？
+    \item 有什么因素会导致这种情况？
+    \item 有什么办法能避免这种情况？
   \end{itemize}
 \end{thinking}
 
@@ -677,12 +718,14 @@ panic at init.c:27: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 \begin{itemize}
 \item \hyperref[think-env_init]{\textbf{\textcolor{baseB}{思考-init的逆序插入}}}
+\item \hyperref[think-mkenvid]{\textbf{\textcolor{baseB}{思考-mkenvid的作用}}}
 \item \hyperref[think-env_setup_vm]{\textbf{\textcolor{baseB}{思考-地址空间初始化}}}
 \item \hyperref[think-user-data]{\textbf{\textcolor{baseB}{思考-user\_data的作用}}}
+\item \hyperref[think-load-icode]{\textbf{\textcolor{baseB}{思考-load-icode的不同情况}}}
 \item \hyperref[think-位置]{\textbf{\textcolor{baseB}{思考-位置的含义}}}
 \item \hyperref[think-pc]{\textbf{\textcolor{baseB}{思考-进程上下文的PC值}}}
 \item \hyperref[think-TIMESTACK]{\textbf{\textcolor{baseB}{思考-TIMESTACK的含义}}}
-\item \hyperref[think-调度]{\textbf{\textcolor{baseB}{思考-不公的调度}}}
+\item \hyperref[think-调度]{\textbf{\textcolor{baseB}{思考-调度}}}
 \end{itemize}
 
 \section{挑战性任务}
@@ -690,3 +733,4 @@ panic at init.c:27: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 修改调度算法，并利用测试的现象说明调度算法是正确的。如果你做了这部分的挑战性任务，请将代码提交到分支
 \textbf{lab3-challenge}并推送到服务器上，并在实验文档中写入新的调度策略对于结果的影响并说明为什么，
 可以自定义测试程序。
+

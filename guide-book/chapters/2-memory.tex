@@ -2,6 +2,7 @@
 
 \section{实验目的}
   \begin{enumerate}
+    \item 了解内存访问原理
     \item 了解MIPS内存映射布局
     \item 掌握使用空闲链表的管理物理内存的方法
     \item 建立页表，实现分页式虚存管理
@@ -11,21 +12,83 @@
 本次实验中，我们需要掌握MIPS页式内存管理机制，需要使用一些数据结构来记录内存的使用情况，并实现内存分配
 和释放的相关函数，完成物理内存管理和虚拟内存管理。
 
-\section{MMU和TLB}
+\section{MMU、TLB和内存访问}
 
-首先介绍两个与内存管理有关的概念：MMU和TLB。
+本章教程的题目是内存管理，而在进行内存管理之前，我们首先需要知道内存访问的整体原理。
+我们首先介绍内存翻译中最重要的两个部件：MMU和TLB，之后介绍内存访问的整体流程。
 
-\begin{note}
-MMU，即内存管理单元（memory‐management unit）。MMU 是 CPU 中用来管理虚拟存储器、物理存储器的
-控制线路，同时也负责虚拟地址映射为物理地址，以及提供硬件机制的内存访问授权。
-\end{note}
+\subsection{MMU}
+根据我们在“计算机组成”和“操作系统”这两门课中学到的知识，我们知道当CPU发出一个访存的指令，需要把虚拟地址翻译成物理地址才能对内存进行访问，而通过对页表相关知识的学习你肯定也对虚拟地址到物理地址的转换过程有了大致的了解，通常把这个过程称为内存翻译， 在计算机中负责完成这一任务的部件是MMU。
 
-\begin{note}
-TLB，即翻译后备缓冲（translation lookaside buffer, 这个全称对你理解这个术语可能不会帮多少忙）。
-TLB 是将程序使用的地址（虚拟地址）翻译成物理地址（访问内存的地址）的硬件。TLB在大多数时候只能映射PC
-物理内存空间的一小部分，主要是作为一个软件管理的地址翻译的缓存来使用。当一个需要的地址翻译不在TLB中时，
-就会产生一个异常，而由异常处理程序来计算并装载正确的翻译。在我们之后的工作中，我们也会看到这一点。
-\end{note}
+MMU的全称是Memory Management Unit，中文为内存管理单元，MMU是硬件设备，它的功能是把逻辑地址映射为虚拟地址，并提供了一套硬件机制来实现内存访问的权限检查，它的位置和功能如下图\ref{lab2-mmu}所示
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=12cm]{lab2-mmu}
+  \caption{MMU的位置和功能}\label{lab2-mmu}
+\end{figure}
+
+我们所熟悉的查询二级页表访存机制，即先查询页目录，再查询相应的二级页表的工作，都是由MMU来完成的。
+
+\subsection{TLB}
+
+我们知道，访存效率在体系结构的设计中是一个很重要的问题，但我们应用的页表机制却会降低系统的性能，举例来说，如果没有页表，那么只需要一次访存，但如果有了二级页表，就需要三次访存。虽然页表机制能带来许多好处，但是这样降低效率还是无法让人接受的，为了解决这一问题，我们需要一个能让计算机能够不经过页表就把虚拟地址映射成物理地址的硬件设备，这就是TLB。
+
+TLB的全称是Translation Lookside Buffer，中文为翻译后援存储器，有的时候也叫相联存储器(Associative Memory)，或者快表，它通常被安装在MMU的内部，如下图\ref{lab2-tlb}所示：
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=12cm]{lab2-tlb}
+  \caption{TLB示意图}\label{lab2-tlb}
+\end{figure}
+
+简单来说，TLB就是页表的高速缓存，每个TLB的条目中包含有一个页面的所有信息（有效位、虚页号、物理页号、修改位、保护位等等），这些条目中的内容和页表中相同页面的条目中的内容是完全一致的。
+
+当一个虚拟地址被送到MMU中进行翻译的时候，硬件首先在TLB中寻找包含这个地址的页面，如果它的虚页号在TLB中，并且没有违反保护位，那么就可以直接从TLB中得到相应的物理页号，而不去访问页表；如果发现虚页号在TLB中不存在，那么MMU将进行常规的页表查找，同时通过一定的策略来将这一页的页表项替换到TLB中，之后再次访问这一页的时候就可以直接在TLB中找到。
+
+容易发现，如果TLB命中，那么我们只需要访问两次内存就可以得到需要的数据，从而从整体上降低了平均访存时间。
+
+到此为止，我们已经基本了解了内存访问的机制。
+
+\subsection{内存访问}
+
+在这之前，我们一直忽略了访存的一个重要部件————cache，相信你已经多次在课堂上接触过这个概念，计算机中的访存过程中一定存在着和cache相关的过程，而之前对cache的忽略就意味着我们对内存访问机制的了解是不全面的，这就产生了下面的三个问题：
+
+\begin{enumerate}
+  \item TLB、cache、MMU、页表这些东西之间有什么关系？
+  \item 一个完整的访存流程是怎样的？
+  \item 我们在这次实验中要完成的内存管理在这个流程中起了什么作用？
+\end{enumerate}
+
+这一节中我们将分别回答这些问题，在你往下看之前，也许你可以先思考一下这些问题，看看下面给出的解答是否符合你的预期。
+
+接下来的讲解将会涉及到cache中的一些概念，我们假设你对这些概念都有一定的了解，如果你感觉有些不确定或者忘了这些内容，你可以回头翻翻计组课本中的相关内容。
+
+一般来说，cache中用来查询相应地址是否存在时所用的地址是物理地址的一部分，这就是cache中的tag，如果是这样，那么很自然的，访存时候所用的虚拟地址应该首先经过TLB和MMU转换成物理地址，然后在cache中查找是否命中，基于这样的考虑，那么完整的访存流程应该是这样的：
+
+\begin{enumerate}
+  \item CPU给出虚拟地址来访问数据，TLB接收到这个地址之后查找是否有对应的页表项。
+  \item 假设页表项存在，则根据物理地址在cache中查询；如果不存在，则MMU执行正常的页表查询工作之后再根据物理地址在cache中查询，同时更新TLB中的内容。
+  \item 如果cache命中，则直接返回给CPU数据；如果没有命中则按照相应的算法进行cache的替换或者装填，之后返回给CPU数据。
+\end{enumerate}
+
+看上去上面的访存过程没什么问题，但如果上述过程是按顺序执行的，那么自然就产生了问题，每次访存都需要先经过TLB，如果TLB命中还能接受，可如果TLB没有命中，同时这个地址又恰好在cache中存在，那么这种情况下先将地址经过MMU翻译再在cache中查询岂不是会造成性能上的损失？
+
+我们把这个问题留给你来思考。
+
+\begin{thinking}\label{think-cache}
+  请思考cache用虚拟地址来查询的可能性，并且给出这种方式对访存带来的好处和坏处。另外，你能否能根据前一个问题的解答来得出用物理地址来查询的优势?
+\end{thinking}
+
+虽然提出了相应的疑问，但是我们可以认为上述过程是大致正确的，当然，这里还有一个问题留给你思考。
+
+\begin{thinking}\label{think-memory-access}
+  请查阅相关资料，针对我们提出的疑问，给出一个上述流程的优化版本，新的版本需要有更快的访存效率。（提示：考虑并行执行某些步骤）
+\end{thinking}
+
+到此，我们已经解决了前面提出的前两个问题。
+
+回想前面的访存过程我们可以发现有一个过程是我们没有提到的，即页表内容的填充。虽然MMU可以自动访问页表得到虚拟地址相应的物理地址，但如果只有一个空荡荡的页表，那么MMU是无法工作的；同时，操作系统需要在软件层面上对内存进行管理和控制，以便为上层的应用提供相应的接口。我们这次的实验就是围绕着这些内容来展开的。
 
 \section{MIPS虚存映射布局}
 
@@ -175,10 +238,23 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 
 \begin{exercise}
 完成 mm/pmap.c 中的 page\_alloc 和 page\_free 函数，基于空闲内存链表 page\_free\_list ，以页
-为单位进行物理内存的管理。
+	为单位进行物理内存的管理。并在init/init.c的函数mips\_init中注释掉page\_check();。此时运行结果如下。
 \end{exercise}
 
-至此，我们的内核已经能够按照分页的方式对物理内存进行管理。
+\begin{minted}[linenos]{c}
+main.c: main is start ...
+init.c: mips_init() is called
+Physical memory: 65536K available, base = 65536K, extended = 0K
+to memory 80401000 for struct page directory.
+to memory 80431000 for struct Pages.
+pmap.c:  mips vm init success
+*temp is 1000
+phycial_memory_manage_check() succeeded
+panic at init.c:17: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+\end{minted}
+
+
+至此，我们的内核已经能够按照分页的方式对物理内存进行管理,
 
 \section{虚拟内存管理}
 
@@ -436,7 +512,7 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
   另外，还可以提醒大家的是，在gxemul中，有tlbdump这个命令，可以随时查看tlb中的内容。
 \section{正确结果展示}
 
-实验二做完之后，正确的结果应该是这样的：
+实验二做完之后，在init/init.c的函数mips\_init中，将page\_check还原，并注释掉physical\_memory\_manage\_check();。运行的正确结果应该是这样的：
 
 \begin{minted}[linenos]{c}
 main.c: main is start ...
@@ -455,11 +531,13 @@ page_check() succeeded!
 panic at init.c:55: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 \end{minted}
 
-最后一行的数字 \textbf{55} 是不固定的。
+地址\textbf{3ffe000}和最后一行的数字 \textbf{55} 是不固定的。
 
 \section{实验思考}
 
 \begin{itemize}
+\item \hyperref[think-cache]{\textbf{\textcolor{baseB}{思考-不同地址类型查询cache的比较}}}
+\item \hyperref[think-memory-access]{\textbf{\textcolor{baseB}{思考-优化访存过程}}}
 \item \hyperref[think-do_while]{\textbf{\textcolor{baseB}{思考-使用do-while(0)语句的好处}}}
 \item \hyperref[think-struct-page]{\textbf{\textcolor{baseB}{思考-Page结构体与物理内存页}}}
 \item \hyperref[think-bzero]{\textbf{\textcolor{baseB}{思考-bzero参数探究}}}
@@ -468,6 +546,40 @@ panic at init.c:55: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 \item \hyperref[think-memory-access]{\textbf{\textcolor{baseB}{思考-访存的问题}}}
 \end{itemize}
 
-\section{挑战性任务}
+\section{挑战性任务——Buddy System}
 
-我们的虚存管理系统分配和回收页面粒度的内存，问题是如果我们需要支持真正的I/O设备，需要分配超过4KB的物理连续的内存；如果我们需要用户态使用，为了提高CPU效率，我们需要分配大小超过4MB的超级页。修改虚存管理，使得可以一次申请2的指数大小的内存，你可以自行设置大小的上限。确保，在需要的时候，将大的存储单元分为小的存储单元；如果可能，将小的存储单元合并为大的存储单元。
+在这次实验中，我们建立了一个简单的页式内存管理系统，你可能已经对操作系统如何控制内存有了初步的了解，但是为了更进一步了解现代操作系统，这还远远不够。现代操作系统为了追求高效的内存管理，使用了很多复杂的技术，在这次挑战性任务中，你将通过探究并实现一个现在在Linux中仍然被广泛使用的物理内存管理算法——伙伴系统，来深入了解内存管理中的问题和相关技术。
+
+
+\subsection{Buddy System}
+
+伙伴系统(Buddy System)是一种支持分配大量连续页面，并能有效减少内存中外碎片的物理内存分配管理算法。相信大家通过“操作系统”理论课的学习，已经对这个算法有了初步的认识，在这里我们只说明减少内存中碎片的必要性，以及对伙伴系统的一些不同版本进行一些简单介绍，而对算法的进一步探究和实现将完全交给同学们来完成。
+
+所谓内存中的外碎片就是指那些还没有分配出去，但是因为空间太小不足以分配给新进程的内存空闲区域，这种碎片一般处于两块已经分配出去的内存的中间。外碎片的增多带来的问题就是，虽然所有碎片加起来的空间可以满足一些请求的空间要求，但当请求需要分配大块连续页面则不能满足。
+
+我们现在使用的按页分配空间的算法，很容易产生很多外碎片，这时就需要像伙伴系统这样的算法来控制外碎片的数量。
+
+Linux中使用伙伴系统来管理物理内存，并且从Linux 2.6.32开始，通过引入迁移类型(Migrate Type)进一步优化了伙伴系统，但在这里你不需要考虑这个改进。
+
+\subsection{题目要求}
+在lab2或者lab2之后的实验的分支中，新建lab2-challenge分支。
+
+在lab2代码的基础上，实现一个伙伴系统，需要实现的功能包括：
+
+\begin{enumerate}
+  \item 根据伙伴算法，使得系统可以分配4MB(或者更大)的连续内存
+  \item 根据伙伴算法来释放内存，尽可能地合并伙伴
+  \item 记录空闲的大小为2\^{}n(n=0,1,2...MAX,MAX是你设定的值)页内存块的个数
+  \item 实现一个类似page\_check()的函数，证明你所实现的系统的正确性
+\end{enumerate}
+
+下面是一个可能的分配、释放内存接口的例子
+
+\begin{minted}[linenos]{c}
+void pages_alloc(struct Page **pp, unsigned int order);
+void pages_free(struct Page *pp, unsigned int order);
+\end{minted}
+
+其中第二个参数order表示需要分配(释放)2\^{}order页的内存，第一个参数**pp(*pp)是这个内存块的第一页。
+
+完成之后提交到同名的远程分支即可。
