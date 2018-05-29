@@ -69,13 +69,13 @@ Experimental Devices}。
 
 \begin{thinking}\label{think-fs-cache}
 
-如果我们通过kseg0读写设备，我们对于设备的写入会缓存到Cache中。通过kseg1访问设备是一种\textbf{错误}的行为，在实际编写代码的时候这么做会引发不可预知的问题。请你思考：这么做这会引起什么问题？对于不同种类的设备（如我们提到的串口设备和IDE磁盘）的操作会有差异吗？可以从缓存的性质和缓存刷新的策略来考虑。
+如果我们通过kseg0读写设备，我们对于设备的写入会缓存到Cache中。通过kseg0访问设备是一种\textbf{错误}的行为，在实际编写代码的时候这么做会引发不可预知的问题。请你思考：这么做这会引起什么问题？对于不同种类的设备（如我们提到的串口设备和IDE磁盘）的操作会有差异吗？可以从缓存的性质和缓存刷新的策略来考虑。
 \end{thinking}
 
 以我们编写完成的串口设备驱动为例，Gxemul 提供的 console 设备的地址：0x10000000，设备寄存器映射如表\ref{lab5-table-console-mem-map}所示：
 
 \begin{table}[htbp]
-\caption{Gexmul Console 内存映射}\label{lab5-table-console-mem-map}
+\caption{Gxemul Console 内存映射}\label{lab5-table-console-mem-map}
 \centering
 \begin{tabular}{|c|l|}
   \hline
@@ -102,7 +102,7 @@ void printcharc(char ch)
 }
 \end{minted}
 
-而在本次实验中，我们需要编写IDE磁盘的驱动完全位于用户空间，用户态进程若是直接读写内核虚拟地址将会由处理器引发一个页错误（Pagefault)。所以我们对于设备的读写必须通过系统调用来实现。这里我们引入了sys\_write\_dev和sys\_read\_dev两个系统调用来实现设备的读写操作。这两个系统调用接受用户虚拟地址，和备的物理地址和读写的长度（按字节计数）作为参数，在内核空间中完成I/O操作。
+而在本次实验中，我们需要编写IDE磁盘的驱动完全位于用户空间，用户态进程若是直接读写内核虚拟地址将会由处理器引发一个地址错误（ADFL/S)。所以我们对于设备的读写必须通过系统调用来实现。这里我们引入了sys\_write\_dev和sys\_read\_dev两个系统调用来实现设备的读写操作。这两个系统调用接受用户虚拟地址，和备的物理地址和读写的长度（按字节计数）作为参数，在内核空间中完成I/O操作。
 
 \begin{exercise}
 请根据 lib/syscall\_all.c 中的说明，完成 \mintinline{c}|sys_write_dev| 函数和 \mintinline{c}|sys_read_dev| 函数的，并且在 user/lib.h, user/syscall\_lib.c 中完成用户态的相应系统调用的接口。
@@ -147,7 +147,7 @@ Gxemul 提供的 Simulated IDE disk 的地址是 0x13000000，I/O寄存器相对
 移和对应的功能如表\ref{lab5-table-disk-mem-map}所示：
 
 \begin{table}[htbp]
-\caption{Gexmul IDE disk I/O 寄存器映射}\label{lab5-table-disk-mem-map}
+\caption{Gxemul IDE disk I/O 寄存器映射}\label{lab5-table-disk-mem-map}
 \centering
 \begin{tabular}{|c|p{12cm}|}
   \hline
@@ -293,7 +293,7 @@ int block_is_free(u_int blockno)
 
 \begin{exercise}
 文件系统需要负责维护磁盘块的申请和释放，在回收一个磁盘块时，需要更改 bitmap 中的标志位。如果要将一个磁盘块设置为 free，
-只需要将 bitmap 中对应的 bit 的值设置为 0x0 即可。请完成 fs/fs.c 中的 \mintinline{c}|free_block| 函数，
+只需要将 bitmap 中对应的 bit 的值设置为 0x1 即可。请完成 fs/fs.c 中的 \mintinline{c}|free_block| 函数，
 实现这一功能。同时思考为什么参数 \mintinline{c}|blockno| 的值不能为 0 ？
 
 \begin{minted}[linenos]{c}
