@@ -848,3 +848,45 @@ i am killed ...
 	
 \end{itemize}
 
+
+\section{挑战性任务——线程和信号量}
+
+
+线程（thread）和信号量（semaphore）是同步与互斥问题的重要概念。
+
+在这个挑战任务中，我们希望你能够按照 POSIX 标准，在小操作系统中实现这两个机制。
+
+
+\subsection{POSIX Threads}
+
+POSIX Threads 也就是 pthreads 库是由 IEEE Std 1003.1c 标准定义的一组函数接口。它至少包含以下的函数：
+
+\begin{itemize}
+    \item pthread\_create 创建线程
+    \item pthread\_exit 退出线程
+    \item pthread\_cancel 撤销线程
+    \item pthread\_join 等待线程结束
+\end{itemize}
+
+
+\subsection{POSIX Semaphore}
+
+POSIX Semaphore 是由 IEEE Std 1003.1b 标准定义的一组函数接口：
+
+\begin{itemize}
+    \item sem\_init 初始化信号量
+    \item sem\_destroy 销毁信号量
+    \item sem\_wait 对信号量P操作（阻塞）
+    \item sem\_trywait 对信号量P操作（非阻塞）
+    \item sem\_post 对信号量V操作
+    \item sem\_getvalue 取得信号量的值
+\end{itemize}
+
+
+\subsection{题目要求}
+
+以lab4分支为基础，新建lab4-challenge分支，至少在该分支中实现上述的两组函数。请合理增加系统调用以及相应的数据结构。
+
+完成之后提交到同名的远程分支即可。
+
+
