@@ -7,6 +7,7 @@
 	\item 掌握管道的原理与底层细节
 	\item 实现管道的读写
 	\item 复述管道竞争情景
+	\item 实现基本shell
 	\item 实现shell中涉及管道的部分
 \end{enumerate}
 
@@ -259,11 +260,16 @@ env\_runs记录了一个进程env\_run的次数，这样我们就可以根据某
 
 shell本质上也是一个用户进程。它解释shell命令的工作是通过创建并运行子进程来完成的：对于每个shell命令，都有一个对应的可执行文件来完成该命令所要完成的工作，shell需要根据所得到的命令来创建执行相应可执行文件的子进程，从而完成命令的解释工作并得到结果。
 
-为了能够使用shell，首先需要使我们的操作系统响应键盘的输入，让shell能够获得用户输入的命令。我们已经使用汇编完成了sys\_cgetc函数，你可以在 lib/getc.S 中看到它的具体实现。但是光有sys\_cgetc函数还不够，你需要增加系统调用syscall\_cgetc来获取键盘的输入。
+实现shell的一个关键函数是spawn，其作用是接受可执行文件路径和传给其的参数，创建一个新的进程使得可执行文件的相关段被映射到新进程的内存中，并设置好栈，以及一些已初始化的数据，比如管道和重定向的文件描述符。其作用类似load_icode和fork，但实现方式不一样。相信经过之前的训练，同学们应该可以较为容易的填出spawn函数。
 
 \begin{exercise}
-	模仿现有的系统调用，增加系统调用syscall\_cgetc。(提示:sys\_cgetc函数不需要传入参数)
+  根据上面的表述以及函数内的注释，补充完成 user/spawn.c 中的\mintinline{c}|int spawn(char *prog, char **argv)|。
+  完成后可以初步看见shell的现象。
 \end{exercise}
+
+\begin{thinking}\label{think-spawn}
+  请解释\mintinline{c}|spawn|函数中注释标记为Share memory一段的作用，并说明为什么该段代码是正确的。你可以尝试对该段代码进行改动以探究其对运行结果的影响。
+\end{thinking}
 
 接下来，我们需要在shell进程里实现对管道和重定向的解释功能。解释shell命令时：
 
@@ -322,6 +328,7 @@ shell本质上也是一个用户进程。它解释shell命令的工作是通过�
 	\item \hyperref[think-dup]{\textbf{\textcolor{baseB}{思考-dup中的进程竞争}}}
 	\item \hyperref[think-automatic]{\textbf{\textcolor{baseB}{思考-原子操作}}}
 	\item \hyperref[think-race]{\textbf{\textcolor{baseB}{思考-解决进程竞争}}}
+	\item \hyperref[think-spawn]{\textbf{\textcolor{baseB}{思考-spawn中的内存共享}}}
 \end{itemize}
 
 
