@@ -5,7 +5,7 @@
     \item 认识操作系统实验环境
     \item 掌握操作系统实验所需的基本工具
   \end{enumerate}
-  
+
 在本章中，我们需要去了解实验环境，熟悉Linux 操作系统（Ubuntu），了解控制终端，掌握一些常用工具并能够脱离可视化界面进行工作。本章节难度非常低，旨在让大家熟悉操作系统实验环境的各类工具，为后续实验奠定基础。
 
 \section{初识实验}
@@ -20,7 +20,7 @@
     \item 编译器：GCC
     \item 版本控制：Git
  \end{itemize}
-	
+
 Ubuntu操作系统，一款开源的GNU/Linux操作系统，基于Linux内核实现，是目前较为流行的几个Linux发行版之一。GNU （GNU is Not Unix的递归缩写），是一套计划，其中包含了三个协议条款，为我们带来了大量开源软件；Linux：严格意义上指代Linux内核，基于该内核的操作系统众多，具有免费、可靠、安全、稳定、多平台等特点。
 
 GXemul，一款计算机架构仿真器，可以模拟所需硬件环境，例如我们需要的MIPS架构下的CPU。
@@ -181,7 +181,7 @@ ls - list directory contents
 \end{minted}
 
 \begin{note}
-与ls命令类似的目录查看命令还有tree命令，它可以根据文件目录生成文件树，这个命令就交给大家自己去实践吧。
+与ls命令类似的目录查看命令还有tree命令。
 \end{note}
 
 然后你就会发现主目录中空空如也，又不知道要做什么好了，这时我们可以使用mkdir命令创建文件目录（即Windows系统中的文件夹），该命令的参数为创建的新目录的名称，如：mkdir newdir 为创建一个名为newdir的目录。
@@ -292,7 +292,7 @@ find - search for files in a directory hierarchy
 用法:find -name 文件名
 \end{minted}
 
-grep是一种强大的文本搜索工具，它能使用正则表达式搜索文本，并把匹配的行打印出来。简单来说，grep命令可以从文件中查找包含pattern部分字符串的行，并将该文件的路径和该行输出至屏幕。当你需要在整个项目目录中查找某个函数名、变量名等特定文本的时候，grep 将是你手头一个强有力的工具。
+grep是一种强大的文本搜索工具，它能使用正则表达式搜索文本，并把匹配的行打印出来。简单来说，grep命令可以从文件中查找包含pattern部分字符串的行，并将该文件的路径和该行输出至屏幕。\textcolor{red}{当你需要在整个项目目录中查找某个函数名、变量名等特定文本的时候，grep 将是你手头一个强有力的工具。}
 
 \begin{minted}[linenos]{bash}
 grep - print lines matching a pattern
@@ -327,6 +327,167 @@ e.g.
 \begin{note}
 在多数shell中，四个方向键也是有各自特定的功能的：←和→可以控制光标的位置，↑和↓可以切换最近使用过的命令
 \end{note}
+
+
+\subsection{linux操作补充}
+tree指令可以根据文件目录生成文件树，作用类似于ls。
+\begin{minted}[linenos]{bash}
+tree
+用法：tree [选项] [目录名]
+选项(常用)：
+        -a 列出全部文件
+        -d 只列出目录
+\end{minted}
+
+ locate也是查找文件的指令，与find的不同之处在于: find 是去硬盘找，locate 只在/var/lib/slocate资料库中找。locate的速度比find快，它并不是真的查找文件，而是查数据库，所以locate的查找并不是实时的，而是以数据库的更新为准，一般是系统自己维护，也可以手工升级数据库。
+\begin{minted}[linenos]{bash}
+locate
+用法 locate [选项] 文件名
+\end{minted}
+
+  Linux的文件调用权限分为三级 : 文件拥有者、群组、其他。利用 chmod 可以藉以控制文件如何被他人所调用。
+\begin{minted}[linenos]{bash}
+chmod
+用法：chmod 权限设定字串 文件...
+权限设定字串格式 :
+        [ugoa...][[+-=][rwxX]...][,...]
+\end{minted}
+
+其中：
+u 表示该文件的拥有者，g 表示与该文件的拥有者属于同一个群组，o 表示其他以外的人，a 表示这三者皆是。
++表示增加权限、-表示取消权限、=表示唯一设定权限。
+r表示可读取，w表示可写入，x表示可执行，X表示只有当该文件是个子目录或者该文件已经被设定过为可执行。
+
+此外chmod也可以用数字来表示权限，格式为：
+\begin{minted}[linenos]{bash}
+chmod abc 文件
+\end{minted}
+abc为三个数字，分别表示拥有者，群组，其他人的权限。r=4，w=2，x=1，用这些数字的加和来表示权限。例如
+chmod 777 file和chmod a=rwx file效果相同。
+
+tmux是一个优秀的终端复用软件，可用于在一个终端窗口中运行多个终端会话。窗格，窗口，会话是tmux的三个基本概念，一个会话可以包含多个窗口，一个窗口可以分割为多个窗格。突然中断退出后tmux仍会保持会话，通过进入会话可以直接从之前的环境开始工作。
+
+窗格操作
+
+tmux的窗格（pane）可以做出分屏的效果。
+\begin{itemize}
+\item ctrl+b % 垂直分屏(组合键之后按一个百分号)，用一条垂线把当前窗口分成左右两屏。
+\item ctrl+b \" 水平分屏(组合键之后按一个双引号)，用一条水平线把当前窗口分成上下两屏。
+\item ctrl+b o 依次切换当前窗口下的各个窗格。
+\item ctrl+b Up|Down|Left|Right 根据按箭方向选择切换到某个窗格。
+\item ctrl+b Space (空格键) 对当前窗口下的所有窗格重新排列布局，每按一次，换一种样式。
+\item ctrl+b z 最大化当前窗格。再按一次后恢复。
+\item ctrl+b x 关闭当前使用中的窗格，操作之后会给出是否关闭的提示，按y确认即关闭。
+\end{itemize}
+
+
+窗口操作
+
+每个窗口（window）可以分割成多个窗格（pane）。
+\begin{itemize}
+\item ctrl+b c 创建之后会多出一个窗口
+\item ctrl+b p 切换到上一个窗口。
+\item ctrl+b n 切换到下一个窗口。
+\item ctrl+b 0 切换到0号窗口，依此类推，可换成任意窗口序号
+\item ctrl+b w 列出当前session所有串口，通过上、下键切换窗口
+\item ctrl+b \& 关闭当前window，会给出提示是否关闭当前窗口，按下y确认即可。
+\end{itemize}
+会话操作
+
+一个会话(session)可以包含多个窗口(window)
+\begin{itemize}
+\item tmux new -s 会话名    新建会话
+\item ctrl+b d    退出会话，回到shell的终端环境
+\item tmux ls    终端环境查看会话列表
+\item tmux a -t 会话名    从终端环境进入会话
+\item tmux kill-session -t 会话名    销毁会话
+\end{itemize}
+\subsection{shell脚本}
+当有很多想要执行的linux指令来完成复杂的工作，或者有一个或一组指令会经常执行时，我们可以通过shell脚本来完成。本节我们将学习使用bash shell。
+首先创建一个文件my.sh，向其中写入一下内容(写入内容可以查看后面的vim和nano教学)：
+\begin{minted}[linenos]{bash}
+#!/bin/bash
+#balabala
+echo "Hello World!"
+\end{minted}
+我们自己创建的shell脚本一般是不能直接运行的，需要添加运行权限:
+chmod +x my.sh
+添加权限之后，我们可以使用bash命令来运行这个文件，把我们的文件作为它的参数：
+\begin{minted}[linenos]{bash}
+bash my.sh
+\end{minted}
+或者使用之前介绍的指令source:
+\begin{minted}[linenos]{bash}
+source my.sh
+\end{minted}
+这样有些不方便，一种更方便的用法是：
+\begin{minted}[linenos]{bash}
+./my.sh
+\end{minted}
+在脚本中我们通常会加入\#!/bin/bash到文件首行，以保证我们的脚本默认会使用bash。第二行的内容是注释，以\#开头。第三行是命令。
+
+\subsection{重定向和管道}
+这部分我们将学习如何实现linux命令的输入输出怎样定向到文件，以及如何将多个指令组合实现更强大的功能。
+shell使用三种流：
+\begin{itemize}
+\item 标准输入：stdin ，由0表示
+\item 标准输出：stdout，由1表示
+\item 标准错误：stderr，由2表示
+\end{itemize}
+重定向和管道可以重定向以上的流。
+重定向在前面已经有过介绍，这里只做一点补充。
+2>>可以将标准错误重定向。三种流可以同时重定向，举例:
+\begin{minted}[linenos]{bash}
+command < input.txt 1>output.txt 2>err.txt
+\end{minted}
+管道：
+
+管道符号“|”可以连接命令：
+\begin{minted}[linenos]{bash}
+command1 | command2 | command3 | ...
+\end{minted}
+以上内容是将command1的stdout发给command2的stdin，command2的stdout发给command3的stdin，依此类推。
+举例:
+\begin{minted}[linenos]{bash}
+cat my.sh | grep "Hello"
+\end{minted}
+上述命令的功能为将my.sh的内容输出给grep指令，grep在其中查找字符串。
+
+\subsection{gxemul的使用}
+gxemul是我们运行小操作系统的仿真器，它可以帮助我们运行和调试小操作系统。直接输入gxemul会显示帮助信息。
+
+gxemul运行选项:
+\begin{itemize}
+\item -E 仿真机器的类型
+\item -C 仿真cpu的类型
+\item -M 仿真的内存大小
+\item -V 进入调试模式
+\end{itemize}
+举例：
+\begin{minted}[linenos]{bash}
+gxemul –E testmips -C R3000 –M 64 vmlinux    #用gxemul运行vmlinux
+gxemul –E testmips -C R3000 –M 64 –V vmlinux
+#以调试模式打开gxemul，对vmlinux进行调试（进入后直接中断，
+#输入continue或step才会继续运行，在此之前可以进行添加断点等操作）
+\end{minted}
+
+进入gxemul后使用Ctrl-C可以中断运行。中断后可以进行单步调试，执行如下指令：
+\begin{itemize}
+\item breakpoint add addr添加断点
+\item continue 继续执行
+\item step [n] 向后执行n条汇编指令
+\item lookup name|addr 通过名字或地址查找标识符
+\item dump [addr [endaddr]] 查询指定地址的内容
+\item reg [cpuid][,c] 查看寄存器内容，添加”,c”可以查看协处理器
+\item help 显示各个指令的作用与用法
+\item quit 退出
+\end{itemize}
+(以上中括号表示内容可以没有)
+
+更多gxemul相关的信息参考http://gavare.se/gxemul/gxemul-stable/doc/index.html
+
+
+
 
 \section{实用工具介绍}
 学会了Linux基本操作命令，我们就可以得心应手地使用命令行界面的Linux操作系统了，但是想要使用Linux系统完成工作，光靠命令行还远远不够。在开始动手阅读并修改代码之前，我们还需要掌握一些实用工具的使用方法。这里我们首先介绍两种常用的文本编辑器：nano和Vim。
@@ -371,6 +532,133 @@ $ gcc test.c -o test
 #使用-o选项生成名为test的可执行文件
 #Windows平台为test.exe
 \end{minted}
+\subsection{Vim进阶操作}
+参见网页的视频。
+\subsection{进程与fork}
+在该部分，同学们只需初步了解进程概念、认识fork函数的效果即可，后续课程会对这两个概念进行进一步的讲解。
+
+进程：进程（Process）是计算机中的程序关于某数据集合上的一次运行活动，是系统进行资源分配和调度的基本单位，是操作系统结构的基础。狭义的说，进程就是正在运行程序的实例，是程序的一次执行
+
+Fork：直观意象是叉子的意思。在我们这里更像是分叉的意思，就好像一条河流动着，遇到一个分叉口，分成两条河一样，fork 就是那个分叉口。在操作系统中，某个进程调用fork() 之后，将会以此为分叉分成两个进程运行。
+
+接下来我们通过一个例子直观感受fork()函数的运行效果
+
+\begin{minted}[linenos]{c}
+int main(void){
+    int var;
+    pid_t pid;
+    printf("Before fork.\n");
+    pid = fork();
+    printf("After fork.\n");
+    if (pid == 0){
+        printf("this is son.\n");
+    } else {
+        printf("this is father.\n");
+    }
+    return 0;
+}
+\end{minted}
+
+（pid\_t为进程编号数据类型，本质上为宏定义的unsigned int类型）
+
+这段代码的输出结果：
+\begin{minted}[linenos]{bash}
+Before fork.
+After fork.
+this is son.
+After fork.
+this is father.
+\end{minted}
+Fork()函数执行后，进程一分为二，出现了父子进程，父子进程会将fork()函数后的代码均执行一遍，唯一的区别是，在子进程中，fork()函数的返回值为0，在父进程中fork()函数的返回值为父进程的进程编号。
+
+接下来通过一个视频，演示fork()函数的效果。
+
+阅读以下代码，选择可能的输出结果
+\begin{minted}[linenos]{c}
+int main(void){
+	int var;
+	pid_t pid;
+	printf("Before fork.\n");
+	pid = fork();
+	printf("After fork.\n");
+	if (pid == 0){
+		pid = fork();
+		if(pid == 0){
+			printf("this is grandson.\n");
+		}
+		else {
+			printf("this is son.\n");
+		}
+	} else {
+		printf("this is father.\n");
+	}
+	return 0;
+}
+
+A
+Before fork.
+After fork.
+this is father.
+this is son.
+Before fork.
+After fork.
+B
+this is father.
+After fork.
+this is son.
+this is grandson.
+Before fork.
+After fork.
+C
+this is father.
+After fork.
+this is son.
+Before fork.
+After fork.
+D
+this is father.
+After fork.
+this is son.
+After fork.
+this is grandson.
+\end{minted}
+
+\subsection{Makefile}
+当我们想要翻开代码大干一番的时候，却面临着一个天大的问题：这堆代码应当从何读起？答曰：Makefile。当你不知所措的时候， 从Makefile开始往往会是一个不错的选择。这时，有同学要问了：什么是make？什么又是Makefile呢？ make工具一般用于维护工程。它可以根据时间戳自动判断项目的哪些部分是需要重新编译的，每次只重编译必要的部分。make工具会读取Makefile文件， 并根据Makefile的内容来执行相应的编译操作。Makefile类似于大家以前接触过的VC工程文件。只不过不像VC那样有图形界面，而是直接用类似脚本的方式实现的。
+
+相较于VC工程而言，Makefile具有更高的灵活性（当然，高灵活性的代价就是学习成本会有所提升，这是必然的），可以方便地管理大型的项目。 而且Makefile理论上支持任意的语言，只要其编译器可以通过shell命令来调用。当你的项目可能会混合多种语言，有着复杂的构建流程的时候， Makefile便能展现出它真正的威力来。
+为了使你更为清晰地了解Makefile的基本概念，我们来写一个简单的Makefile。假设我们手头有一个Hello World程序需要编译。我们来为它写一个简易的Makefile。 让我们从头开始，如果我们没有Makefile，直接动手编译这个程序，我们需要下面这样一个指令
+\begin{minted}[linenos]{bash}
+# 直接使用gcc编译Hello World程序
+$ gcc -o hello_world hello_world.c
+\end{minted}
+那么，如果我们想把它写成Makefile，我们应该怎么办呢？makefile最基本的格式是这样的:
+\begin{minted}[linenos]{make}
+target: dependencies
+    command 1
+    command 2
+    ...
+    command n
+\end{minted}
+其中，target是我们构建(Build)的目标，而dependencies是构建该目标所需的其它文件或其他目标。之后是构建出该目标所需执行的指令。 有一点尤为需要注意：每一个指令(command)之前必须有一个TAB。这里必须使用TAB而不能是空格，否则make会报错。
+
+我们的简易的Makefile可以写成如下的样子，之后执行make即可产生hello\_world这个可执行文件。
+\begin{minted}[linenos]{make}
+all: hello_world.c
+    gcc -o hello_world hello_world.c
+\end{minted}
+理解了Makefile最基本的概念后，我们来看一下我们的小操作系统的最顶层的Makefile。由于Makefile是用于指导程序如何被构建的， 因此，通过阅读Makefile，我们就可以理解源代码被构建成可执行文件的过程。这一过程可以给我们一些阅读代码的提示， 可以说，Makefile就像源代码的地图，告诉你源代码是如何一步一步成为最终的可执行文件的。下面的代码是实验代码最顶层的Makefile， 通过阅读它我们就能了解代码中很多宏观的东西。
+
+在lab0阶段，建议同学们自己尝试写一个简单的makefile文件，这里为同学们提供两个新手友好的网址为大家服务：
+\begin{enumerate}
+  \item http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor
+  \item http://www.gnu.org/software/make/manual/make.html\#Reading-Makefiles
+\end{enumerate}
+第一个网址详细描述了如何从一个简单的makefile入手，逐步扩充其功能，最终写出一个相对完善的makefile，同学们可以从这一网站入手，仿照其样例，写出一个自己的makefile。
+第二个网址提供了一份完备的makefile语法说明，今后同学们在实验中遇到了未知的makefile语法，均可在这一网站上找到满意的答案。
+
+
+
 
 \section{Git专栏--轻松维护和提交代码}
 经过上面的一系列的学习之后，你刚刚伸了个懒腰，也许准备喝杯茶休息休息。但突然你意识到了一个问题：之前好像说，有一个叫做Git的东西能对我们的学习进行评测？我们的实验是通过git版本控制系统进行管理，那么接下来，在本章的最后，我们就来了解一下git相关的内容。
@@ -437,7 +725,7 @@ $ git commit
 \end{minted}
 如果不带任何附加选修，执行后会弹出一个说明窗口，如下所示：
 \begin{minted}[linenos]{bash}
-GNU nano 2.2.6    文件： /home/13061193/13061193-lab/.git/COMMIT_EDITMSG              
+GNU nano 2.2.6    文件： /home/13061193/13061193-lab/.git/COMMIT_EDITMSG
 
 Notes to test.
 # 请为您的变更输入提交说明。以 '#' 开始的行将被忽略，而一个空的提交
@@ -499,16 +787,16 @@ Run
 相信大家从第一句也能推测出，这是要求我们设置提交者身份的。我们设置身份有 什么作用呢？别急，等你设置成功了我们再详谈。
 
 \begin{note}
-从上面我们也知道了，我们可以用  
+从上面我们也知道了，我们可以用
 
   git config -{}-global user.email “you@example.com”
-  
+
   git config -{}-global user.name “Your Name“
-  
+
 这两条命令设置我们的名字和邮箱，在我们的实验中对这两个没有什么要求，大家随性设置就好，给个示例：
 
   git config -{}-global user.email “qianlxc@126.com”
-  
+
   git config -{}-global user.name “Qian”
 \end{note}
 
@@ -594,14 +882,14 @@ no changes added to commit (use "git add" and/or "git commit -a")
 看到这里，相信你对 Git 的设计有了初步的认识。下一步我们就来深入理解一下 Git 里的一些机制，从而让我们可以一次上手，终身难忘。
 
 \subsection{Git三棵树}
-我们的本地仓库由 git 维护的三棵“树”组成。第一个是我们的工作区，它持有实际文件；第二个是暂存区（Index 有时也称 Stage），它像个暂时存放的区域，临时保存你的改动；最后是 HEAD，指向你最近一次提交后的结果。 
+我们的本地仓库由 git 维护的三棵“树”组成。第一个是我们的工作区，它持有实际文件；第二个是暂存区（Index 有时也称 Stage），它像个暂时存放的区域，临时保存你的改动；最后是 HEAD，指向你最近一次提交后的结果。
 
 在我们的.git 目录中，文件.git/index 实际上就是一个包含文件索引的目录树，像是一个虚拟的工作区。在这个虚拟工作区的目录树中，记录了文件名、文件的状态信息（时间戳、文件长度等），但是文件的内容并不存储其中，而是保存在 Git 对象库（.git/objects）中，文件索引建立了文件和对象库中对象实体之间的对应。下面这个图展示了工作区、版本库中的暂存区和版本库之间的关系，希望你能耐着性子仔细理解这张图和不同操作所带来的不同影响。
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=15cm]{git-stage}
-  \caption{工作区、暂存区和版本库}\label{fig:git-stage} 
+  \caption{工作区、暂存区和版本库}\label{fig:git-stage}
 \end{figure}
 
 \begin{itemize}
@@ -640,7 +928,7 @@ Git 中引入的\textbf{暂存区}的概念可以说是 Git 里最难理解但�
 好了，学了这么多，我们来利用自己的知识帮助小明摆脱困境吧。
 
 \begin{thinking}\label{think-小明的困境}
-	
+
 	\begin{itemize}
 		\item 深夜，小明在做操作系统实验。困意一阵阵袭来，小明睡倒在了键盘上。等到小明早上醒来的时候，他惊恐地发现，他把一个重要的代码文件printf.c删除掉了。苦恼的小明向你求助，你该怎样帮他把代码文件恢复呢？
 		\item 正在小明苦恼的时候，小红主动请缨帮小明解决问题。小红很爽快地在键盘上敲下了git rm printf.c，这下事情更复杂了，现在你又该如何处理才能弥补小红的过错呢？
@@ -659,7 +947,7 @@ Git 中引入的\textbf{暂存区}的概念可以说是 Git 里最难理解但�
 为了体会它的作用，我们做个小练习试一下
 
 \begin{exercise}
-	
+
 	\begin{itemize}
 		\item 找到我们在/home/16xxxxxx\_2018\_jac/下刚刚创建的README.txt，没有的话就新建一个。
 		\item 在文件里加入\textbf{Testing 1}，add，commit，提交说明写 1。
@@ -812,10 +1100,10 @@ git pull\label{更新指令} 是条更新用的指令，如果助教老师在服
 \begin{minted}[linenos]{bash}
 中文版：
 To git@github.com:16xxxxxx.git
- ! [rejected]        master -> master (non-fast-forward) 
-error: 无法推送一些引用到 'git@github.com:16xxxxxx.git' 
-提示：更新被拒绝，因为您当前分支的最新提交落后于其对应的远程分支。 
-提示：再次推送前，先与远程变更合并（如 'git pull ...'）。详见 
+ ! [rejected]        master -> master (non-fast-forward)
+error: 无法推送一些引用到 'git@github.com:16xxxxxx.git'
+提示：更新被拒绝，因为您当前分支的最新提交落后于其对应的远程分支。
+提示：再次推送前，先与远程变更合并（如 'git pull ...'）。详见
 提示：'git push --help' 中的 'Note about fast-forwards' 小节。
 
 英文版：
