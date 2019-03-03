@@ -1358,23 +1358,25 @@ Aborting
 \section{实战测试}
 随着lab0学习的结束，下面就要开始通过实战检验水平了，请同学们按照下面的题目要求完成所需操作，最后将工作区push至远端以进行评测，评测完成后会返回lab0课下测试的成绩，通过课下测试(>=60分)即可参加上机时的课上测试。
 \begin{exercise}
-在lab0工作区的src目录中，存在一个名为code.c的文件，使用刚刚学过的工具打开code.c，观察代码你会发现其中的qsort函数是一个简单而标准但似乎并不完整的快速排序算法代码，请你根据自己对这种排序算法的理解，将其补全并另存为qsort.c，使其可以完成排序功能并输出排序后的数字序列（以空格分隔）。
 
-建立目录，使补全后的qsort.c文件路径为：
+1、在 fibo.c 中使用 c 语言实现输出斐波那契数列前 n 位的程序（ n 为评测时的输入数据，输出用逗号分隔，例如 1 1 2 3 5 ）
 
-/home/16xxxxxx\_2018\_jac/16xxxxxx-lab/dst/result/code/qsort.c。
+2、完善 Makefile，要求使用 make 指令可实现 fibo.c 的编译链接，可执行文件名为 fibo
 
-并将其编译为可执行文件qsort，存入路径为：
+3、在文件夹 sh\_test中新建文件 hello\_os.sh，要求通过指令 bash hello\_os.sh xxx xxx.c可以在 sh\_test 文件夹下创建新文件 xxx.c，该.c 文件的内容为当前目录文本文档 xxx的第 8、 32、 128、 512、 1024 行的内容提取。
+例如：代码补全后，在 src/sh\_test 文件夹使用指令 bash hello\_os.sh file hello\_os.c
+可以在当前文件夹下生成文件 hello\_os.c（ 若已有 hello\_os.c，则将其覆盖），其内容
+为 src/sh\_test/file 第 8、 32、 128、 512、 1024 行的内容提取。
 
-/home/16xxxxxx\_2018\_jac/16xxxxxx-lab/dst/result/qsort
+4、将完成后的 src/fibo.c、 src/Makefile、 src/sh\_test/hello\_os.sh 依次拷贝到
+dst/fibo.c、 dst/Makefile、 dst/sh\_test/hello\_os.sh 下。
 
-\textbf{[注意：文件名和路径必须与题目要求相同]}
-
-文件目录树应如下图所示：
+完成后17xxxxxx-lab下的文件树如图
 \end{exercise}
+
 \begin{figure}[htbp]
   \centering
-  \includegraphics[height=4cm]{0-exam}
+  \includegraphics[height=6cm]{0-exam}
 \end{figure}
 
 \section{实验思考}
