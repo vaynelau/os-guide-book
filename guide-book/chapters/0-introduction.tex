@@ -301,6 +301,7 @@ grep - print lines matching a pattern
 		-a		不忽略二进制数据进行搜索
 		-i		忽略文件大小写差异
 		-r		从文件夹递归查找
+    -n    显示行号
 \end{minted}
 
 以上，就是Linux系统入门级的部分常用操作命令以及这些命令的常用选项，如果想要查看这些命令的其他功能选项或者新命令的详尽说明，就需要使用Linux下的帮助命令——man命令，通过man指令可以查看Linux中的指令帮助、配置文件帮助和编程帮助等信息。
@@ -333,7 +334,7 @@ e.g.
 tree指令可以根据文件目录生成文件树，作用类似于ls。
 \begin{minted}[linenos]{bash}
 tree
-用法：tree [选项] [目录名]
+用法: tree [选项] [目录名]
 选项(常用)：
         -a 列出全部文件
         -d 只列出目录
@@ -342,13 +343,13 @@ tree
  locate也是查找文件的指令，与find的不同之处在于: find 是去硬盘找，locate 只在/var/lib/slocate资料库中找。locate的速度比find快，它并不是真的查找文件，而是查数据库，所以locate的查找并不是实时的，而是以数据库的更新为准，一般是系统自己维护，也可以手工升级数据库。
 \begin{minted}[linenos]{bash}
 locate
-用法 locate [选项] 文件名
+用法: locate [选项] 文件名
 \end{minted}
 
   Linux的文件调用权限分为三级 : 文件拥有者、群组、其他。利用 chmod 可以藉以控制文件如何被他人所调用。
 \begin{minted}[linenos]{bash}
 chmod
-用法：chmod 权限设定字串 文件...
+用法: chmod 权限设定字串 文件...
 权限设定字串格式 :
         [ugoa...][[+-=][rwxX]...][,...]
 \end{minted}
@@ -364,6 +365,59 @@ chmod abc 文件
 \end{minted}
 abc为三个数字，分别表示拥有者，群组，其他人的权限。r=4，w=2，x=1，用这些数字的加和来表示权限。例如
 chmod 777 file和chmod a=rwx file效果相同。
+
+diff命令用于比较文件的差异。
+\begin{minted}[linenos]{bash}
+diff [选项] 文件1 文件2
+常用选项
+-b 不检查空格字符的不同
+-B 不检查空行
+-q 仅显示有无差异，不显示详细信息
+\end{minted}
+
+sed是一个文件处理工具，可以将数据行进行替换、删除、新增、选取等特定工作。
+\begin{minted}[linenos]{bash}
+sed
+sed  [选项] ‘命令’ 输入文本
+选项(常用):
+        -n:使用安静模式。在一般 sed 的用法中，输入文本的所有内容都会被输出。
+           加上 -n 参数后，则只有经过sed 处理的内容才会被显示。
+        -e: 进行多项编辑，即对输入行应用多条sed命令时使用。
+        -i:直接修改读取的档案内容，而不是输出到屏幕。使用时应小心。
+命令(常用)：
+        a :新增， a后紧接着\\，在当前行的后面添加一行文本
+        c :取代， c后紧接着\\， 用新的文本取代本行的文本
+        i :插入， i后紧接着\\，在当前行的上面插入一行文本
+        d :删除，删除当前行的内容
+        p :显示，把选择的内容输出。通常 p 会与参数 sed -n 一起使用。
+        s :取代，格式为s/re/string，re表示正则表达式，string为字符串，
+           功能为将正则表达式替换为字符串。
+\end{minted}
+举例
+\begin{minted}[linenos]{bash}
+sed ‘3p’ my.txt
+#输出my.txt的第三行
+sed ‘2d’ my.txt
+#删除my.txt文件的第二行
+sed ‘2,$d’ my.txt
+#删除my.txt文件的第二行到最后一行
+sed 's/str1/str2/g' my.txt
+#在整行范围内把str1替换为str2。
+#如果没有g标记，则只有每行第一个匹配的str1被替换成str2
+sed -e '4a\str ' -e 's/str/aaa' my.txt
+#-e选项允许在同一行里执行多条命令。例子的第一条是第四行后添加一个str，
+#第二个命令是将str替换为aaa。命令的执行顺序对结果有影响。
+\end{minted}
+
+awk是一种处理文本文件的语言，是一个强大的文本分析工具。这里只举几个简单的例子，学有余力的同学可以自行深入学习。
+\begin{minted}[linenos]{bash}
+awk '$1>2 {print $1,$3}' my.txt
+\end{minted}
+这个命令的格式为awk 'pattern action' file，pattern为条件，action为命令，file为文件。命令中出项的\$n代表每一行中用空格分隔后的第n项。所以该命令的意义是文件my.txt中所有第一项大于2的行，输出第一项和第三项。
+\begin{minted}[linenos]{bash}
+awk -F, '{print $2}'   my.txt
+\end{minted}
+-F选项用来指定用于分隔的字符，默认是空格。所以该命令的\$n就是用，分隔的第n项了。
 
 tmux是一个优秀的终端复用软件，可用于在一个终端窗口中运行多个终端会话。窗格，窗口，会话是tmux的三个基本概念，一个会话可以包含多个窗口，一个窗口可以分割为多个窗格。突然中断退出后tmux仍会保持会话，通过进入会话可以直接从之前的环境开始工作。
 
@@ -425,6 +479,108 @@ source my.sh
 ./my.sh
 \end{minted}
 在脚本中我们通常会加入\#!/bin/bash到文件首行，以保证我们的脚本默认会使用bash。第二行的内容是注释，以\#开头。第三行是命令。
+
+shell传递参数与函数
+
+我们可以向shell脚本传递参数。
+my2.sh的内容
+\begin{minted}[linenos]{bash}
+echo $1
+\end{minted}
+
+执行命令
+\begin{minted}[linenos]{bash}
+./my.sh msg
+\end{minted}
+
+则shell会执行echo msg这条指令。
+\$n就代表第几个参数，而\$0也就是命令，在例子中就是./my.sh。
+除此之外还有一些可能有用的符号组合
+\begin{itemize}
+\item \$\# 传递的参数个数
+\item \$* 一个字符串显示传递的全部参数
+\end{itemize}
+
+shell中的函数也用类似的方式传递参数。
+\begin{minted}[linenos]{bash}
+function 函数名 ()
+{
+    commands
+    [return int]
+}
+\end{minted}
+function或者()可以省略其中一个。
+举例
+\begin{minted}[linenos]{bash}
+fun(){
+    echo $1
+    echo $2
+    echo “the number of parameters is $#”
+}
+fun 1 str2
+\end{minted}
+
+shell流程控制
+shell脚本中也可以使用分支和循环语句。学有余力的同学可以学习一下。
+
+if的格式：
+\begin{minted}[linenos]{bash}
+if condition
+then
+    command1
+    command2
+    ...
+fi
+\end{minted}
+
+或者写到一行
+\begin{minted}[linenos]{bash}
+if condition; then command1; command2; … fi
+\end{minted}
+
+举例
+\begin{minted}[linenos]{bash}
+a=1
+if [ $a -ne 1 ]; then echo ok; fi
+\end{minted}
+
+条件部分可能会让同学们感到疑惑。中括号包含的条件表达式的-ne是关系运算符，它们和c语言的比较运算符对应如下。
+
+\begin{tabular}{lll}
+-eq  &==  &(equal)  \\
+-ne  &!=  &(not equal) \\
+-gt  &>   &(greater than) \\
+-lt  &<   &(less than) \\
+-ge  &>=  &(greater or equal)\\
+-le  &<=  &(less or equal)
+\end{tabular}
+
+条件也可以写true或false。
+变量除了使用自己定义的以外，还有一个比较常用的是\$?，代表上一个命令的返回值。比如刚执行完diff后，若两文件相同\$?为0。
+
+实际上condition的位置上也是命令，当返回值为0时执行。左中括号是指令，\$a、-ne、1、]是指令的选项，关系成立放回0。true则是直接返回0。condition也可以用diff file1 file2来填。
+
+while语句格式如下
+\begin{minted}[linenos]{bash}
+while condition
+do
+    commands
+done
+\end{minted}
+while语句可以使用continue和break这两个循环控制语句。
+
+例如创建10个目录，名字是file1到file9。
+\begin{minted}[linenos]{bash}
+a=1
+while [ $a –ne 10]
+do
+	mkdir file$a
+	a=$[$a+1]
+done
+\end{minted}
+有两点请注意：流程控制的内容不可为空。运算符和变量之间要有空格。
+
+除了以上内容，shell还有for，case，else语句，逻辑运算符等语法，内容有兴趣的同学可以自行了解。
 
 \subsection{重定向和管道}
 这部分我们将学习如何实现linux命令的输入输出怎样定向到文件，以及如何将多个指令组合实现更强大的功能。
