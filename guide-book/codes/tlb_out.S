@@ -7,7 +7,7 @@ LEAF(tlb_out)
 	mfc0	k1,CP0_ENTRYHI
 	mtc0	a0,CP0_ENTRYHI
 	nop
-	tlbp
+	// insert tlbp or tlbwi
 	nop
 	nop
 	nop
@@ -18,7 +18,7 @@ LEAF(tlb_out)
 	mtc0	zero,CP0_ENTRYHI
 	mtc0	zero,CP0_ENTRYLO0
 	nop
-	tlbwi
+	// insert tlbp or tlbwi
 NOFOUND:
 
 	mtc0	k1,CP0_ENTRYHI
