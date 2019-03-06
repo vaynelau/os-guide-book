@@ -395,7 +395,7 @@ sed  [选项] ‘命令’ 输入文本
 \end{minted}
 举例
 \begin{minted}[linenos]{bash}
-sed ‘3p’ my.txt
+sed -n ‘3p’ my.txt
 #输出my.txt的第三行
 sed ‘2d’ my.txt
 #删除my.txt文件的第二行
@@ -558,7 +558,7 @@ if [ $a -ne 1 ]; then echo ok; fi
 条件也可以写true或false。
 变量除了使用自己定义的以外，还有一个比较常用的是\$?，代表上一个命令的返回值。比如刚执行完diff后，若两文件相同\$?为0。
 
-实际上condition的位置上也是命令，当返回值为0时执行。左中括号是指令，\$a、-ne、1、]是指令的选项，关系成立放回0。true则是直接返回0。condition也可以用diff file1 file2来填。
+实际上condition的位置上也是命令，当返回值为0时执行。左中括号是指令，\$a、-ne、1、]是指令的选项，关系成立返回0。true则是直接返回0。condition也可以用diff file1 file2来填。
 
 while语句格式如下
 \begin{minted}[linenos]{bash}
