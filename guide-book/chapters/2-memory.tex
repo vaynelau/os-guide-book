@@ -82,13 +82,22 @@ TLB的全称是Translation Lookside Buffer，中文为翻译后援存储器，�
 
 虽然提出了相应的疑问，但是我们可以认为上述过程是大致正确的，当然，这里还有一个问题留给你思考。
 
-\begin{thinking}\label{think-memory-access}
+\begin{thinking}\label{think-optim-memory-access}
   请查阅相关资料，针对我们提出的疑问，给出一个上述流程的优化版本，新的版本需要有更快的访存效率。（提示：考虑并行执行某些步骤）
 \end{thinking}
 
 到此，我们已经解决了前面提出的前两个问题。
 
 回想前面的访存过程我们可以发现有一个过程是我们没有提到的，即页表内容的填充。虽然MMU可以自动访问页表得到虚拟地址相应的物理地址，但如果只有一个空荡荡的页表，那么MMU是无法工作的；同时，操作系统需要在软件层面上对内存进行管理和控制，以便为上层的应用提供相应的接口。我们这次的实验就是围绕着这些内容来展开的。
+\begin{thinking}\label{think-addr-type}
+	在我们的实验中，有许多对虚拟地址或者物理地址操作的宏函数(详见include/mmu.h ),那么我们在调用这些宏的时候需要弄清楚需要操作的地址是物理地址还是虚拟地址，阅读下面的代码，指出x是一个物理地址还是虚拟地址。
+	\begin{minted}[linenos]{c}
+	int x;
+	char* value = return_a_pointer();
+	*value = 10;
+	x = (int) value;
+	\end{minted}
+\end{thinking}
 
 \section{MIPS虚存映射布局}
 
@@ -173,6 +182,12 @@ struct Page {
 \mintinline{c}|{ /* ... */ }| 的语句块，这样的写法好处是什么？
 \end{thinking}
 
+\begin{exercise}
+在阅读queue.h文件之后，相信你对宏函数的巧妙之处有了更深的体会。
+请完成queue.h中的\mintinline{c}|LIST_INSERT_AFTER|函数和\mintinline{c}|LIST_INSERT_TAIL|函数。
+\end{exercise}
+
+
 在 include/pmap.h 中，我们使用 LIST\_HEAD 宏来定义了一个结构体类型 Page\_list ，在 mm/pmap.c
 中，创建了一个该类型的变量 page\_free\_list 来以链表的形式表示所有的空闲物理内存：
 
@@ -187,6 +202,50 @@ static struct Page_list page_free_list; /* Free list of physical pages */
 那我们的物理内存页究竟在哪呢？Page 结构体又是通过怎样的方式找到它代表的物理内存页的地址呢？
 请你阅读 include/pmap.h 与 mm/pmap.c 中相关代码，给出你的想法。
 \end{thinking}
+
+\begin{thinking}\label{think-page}
+请阅读 include/queue.h 以及 include/pmap.h, 将Page\_list的结构梳理清楚,选择正确的展开结构(请注意指针)。
+\begin{minted}[linenos]{c}
+A:
+struct Page_list{
+    struct {
+         struct {
+            struct Page *le_next;
+            struct Page **le_prev;
+        }* pp_link;
+        u_short pp_ref;
+    }* lh_first;
+}
+\end{minted}
+\begin{minted}[linenos]{c}
+B:
+struct Page_list{
+    struct {
+         struct {
+            struct Page *le_next;
+            struct Page **le_prev;
+        } pp_link;
+        u_short pp_ref;
+    } lh_first;
+}
+\end{minted}
+\begin{minted}[linenos]{c}
+C:
+struct Page_list{
+    struct {
+         struct {
+            struct Page *le_next;
+            struct Page **le_prev;
+        } pp_link;
+        u_short pp_ref;
+    }* lh_first;
+}
+\end{minted}
+\end{thinking}
+
+
+
+
 
 \subsection{内存分配和释放}
 
@@ -473,7 +532,7 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
 
 \begin{thinking}\label{think-tlb}
 思考一下tlb\_out 汇编函数，结合代码阐述一下跳转到\textbf{NOFOUND}的流程？
-查找MIPS手册tlbp和tlbwi指令，明确其用途，并解释为何第10行处指令后有4条nop指令。
+从MIPS手册中查找tlbp和tlbwi指令，明确其用途，并解释为何第10行处指令后有4条nop指令。
 \end{thinking}
 
 \begin{exercise}
@@ -519,6 +578,10 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
   显然，运行后结果与我们预期的不符，va值为0x88888，相应的pa中的值为0。这说明我们的代码中存在问题，请你仔细思考我们的访存模型，指出问题所在。
   \end{thinking}
   另外，还可以提醒大家的是，在gxemul中，有tlbdump这个命令，可以随时查看tlb中的内容。
+  \begin{thinking}\label{think-PSE}
+  在X86体系结构下的操作系统，有一个特殊的寄存器CR4，在其中有一个PSE位，当该位设为1时将开启4MB大物理页面模式，请查阅相关资料，说明当PSE开启时的页表组织形式与我们当前的页表组织形式的区别。
+  \end{thinking}
+
 \section{正确结果展示}
 
 实验二做完之后，在init/init.c的函数mips\_init中，将page\_check还原，并注释掉physical\_memory\_manage\_check();。运行的正确结果应该是这样的：
@@ -546,12 +609,14 @@ panic at init.c:55: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 \begin{itemize}
 \item \hyperref[think-cache]{\textbf{\textcolor{baseB}{思考-不同地址类型查询cache的比较}}}
-\item \hyperref[think-memory-access]{\textbf{\textcolor{baseB}{思考-优化访存过程}}}
+\item \hyperref[think-optim-memory-access]{\textbf{\textcolor{baseB}{思考-优化访存过程}}}
+\item \hyperref[think-addr-type]{\textbf{\textcolor{baseB}{思考-地址类型判断}}}
 \item \hyperref[think-do_while]{\textbf{\textcolor{baseB}{思考-使用do-while(0)语句的好处}}}
 \item \hyperref[think-struct-page]{\textbf{\textcolor{baseB}{思考-Page结构体与物理内存页}}}
 \item \hyperref[think-bzero]{\textbf{\textcolor{baseB}{思考-bzero参数探究}}}
 \item \hyperref[think-windows_pde_addr]{\textbf{\textcolor{baseB}{思考-自映射机制页目录地址的计算}}}
 \item \hyperref[think-tlb]{\textbf{\textcolor{baseB}{思考-NOFOUND的奥妙及两条MIPS指令}}}
 \item \hyperref[think-memory-access]{\textbf{\textcolor{baseB}{思考-访存的问题}}}
+\item \hyperref[think-PSE]{\textbf{\textcolor{baseB}{思考-大物理页面}}}
 \end{itemize}
 
