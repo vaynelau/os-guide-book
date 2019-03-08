@@ -821,7 +821,7 @@ main函数在什么地方？我们又是怎么跨文件调用函数的呢？
 
 \begin{exercise}
 完成boot/start.S中空缺的部分。设置栈指针，跳转到main函数。
-使用gxemul –E testmips –C R3000 –M 64 elf-file运行(其中elf-file是你编译生成的vmlinux文件的路径)。 
+使用/OSLAB/gxemul –E testmips –C R3000 –M 64 elf-file运行(其中elf-file是你编译生成的vmlinux文件的路径)。 
 \end{exercise}
 
 在调用main函数之前，我们需要将sp寄存器设置到内核栈空间的位置上。具体的地址可以从mmu.h中看到。
