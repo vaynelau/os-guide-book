@@ -625,6 +625,10 @@ void *set_except_vector(int n, void *addr)
 通过上面的描述，补充 \textbf{ kclock\_init } 函数。
 \end{exercise}
 
+\begin{thinking}\label{think-时钟设置}
+阅读 kclock\_asm.S  文件并说出每行汇编代码的作用
+\end{thinking}
+
 \subsection{进程调度}
 
 通过上面的描述，我们知道了，其实在时钟中断产生时，最终是调用了sched\_ yield函数来进行进程的调度，
@@ -632,8 +636,12 @@ void *set_except_vector(int n, void *addr)
 调度的算法很简单，就是时间片轮转的算法，没有优先级，根据注释就可以轻松写出。
 
 \begin{exercise}
-根据注释，完成 \textbf{sched\_yield }函数的补充。
+根据注释，完成 \textbf{sched\_yield }函数的补充，并根据调度方法对 env.c 中的部分函数进行修改，使得进程能够被正确调度。
 \end{exercise}
+
+\begin{thinking}\label{think-进程调度}
+阅读相关代码，思考操作系统是怎么根据时钟周期切换进程的。
+\end{thinking}
 
 至此，我们的实验三就算是圆满完成了。
 
@@ -663,15 +671,7 @@ panic at init.c:27: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
 \end{minted}
 
-当然不会这么整齐，且没有换行，只是交替输出2和1而已～当然还不能放过你，你还需要再思考一部分内容
-
-\begin{thinking}\label{think-调度}
-思考一下你的调度程序，这种调度方式由于某种不可避免的缺陷而造成对进程的不公平。
-  \begin{itemize}
-    \item 这种不公平是如何产生的？
-    \item 如果实验确定只运行两个进程，你如何改进可以降低这种不公平？
-  \end{itemize}
-\end{thinking}
+当然不会这么整齐，且没有换行，只是交替输出2 和1 而已～不过1 的个数是2 的2 倍。
 
 \section{实验思考}
 
@@ -682,7 +682,8 @@ panic at init.c:27: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 \item \hyperref[think-位置]{\textbf{\textcolor{baseB}{思考-位置的含义}}}
 \item \hyperref[think-pc]{\textbf{\textcolor{baseB}{思考-进程上下文的PC值}}}
 \item \hyperref[think-TIMESTACK]{\textbf{\textcolor{baseB}{思考-TIMESTACK的含义}}}
-\item \hyperref[think-调度]{\textbf{\textcolor{baseB}{思考-不公的调度}}}
+\item \hyperref[think-时钟设置]{\textbf{\textcolor{baseB}{思考-时钟的设置}}}
+\item \hyperref[think-进程调度]{\textbf{\textcolor{baseB}{思考-进程的调度}}}
 \end{itemize}
 
 \section{挑战性任务}
