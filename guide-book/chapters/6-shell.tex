@@ -1,3 +1,7 @@
+\usepackage{ulem}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
 \chapter{管道与Shell}
 %目标：user/pipe.c 与 user/sh.c
 %是否新增？
@@ -135,7 +139,7 @@ pipe(int pfd[2])
 为了解决上面提出的问题，我们必须得知道管道的另一端是否已经关闭。不论是在读者还是在写者中，我们都需要对另一端的状态进行判断：当出现缓冲区空或满的情况时，要根据另一端是否关闭来判断是否要返回。如果另一端已经关闭，进程返回0即可；如果没有关闭，则切换到其他进程运行。
 
 \begin{note}
-Unix : If all file descriptors referring to the write end of a pipe have been closed, then an attempt to read(2) from the pipe will see end-of-file (read(2) will return 0) link : http://linux.die.net/man/7/pipe
+如果管道的写端相关的所有的文件描述符都已经关闭，那么管道读端将会读到文件结尾并返回0。 link : http://linux.die.net/man/7/pipe
 \end{note}
 
 那么我们该如何知晓管道的另一端是否已经关闭了呢？这时就要用到我们的\mintinline{c}|static int _pipeisclosed(struct Fd *fd, struct Pipe *p)|函数。而这个函数的核心，就是下面我们要讲的恒成立等式了。
@@ -258,17 +262,107 @@ env\_runs记录了一个进程env\_run的次数，这样我们就可以根据某
 
 \section{shell}
 
-shell本质上也是一个用户进程。它解释shell命令的工作是通过创建并运行子进程来完成的：对于每个shell命令，都有一个对应的可执行文件来完成该命令所要完成的工作，shell需要根据所得到的命令来创建执行相应可执行文件的子进程，从而完成命令的解释工作并得到结果。
 
-实现shell的一个关键函数是spawn，其作用是接受可执行文件路径和传给其的参数，创建一个新的进程使得可执行文件的相关段被映射到新进程的内存中（可执行文件的相关段位置需要借助readelf命令的帮助，该命令同交叉编译器位于同一目录下。可执行文件的后缀为 .b），并设置好栈，以及一些已初始化的数据，比如管道和重定向的文件描述符。其作用类似load\_icode和fork，但实现方式不一样。相信经过之前的训练，同学们应该可以较为容易的填出spawn函数。
 
-\begin{exercise}
-  根据上面的表述以及函数内的注释，补充完成 user/spawn.c 中的 \mintinline{c}|int spawn(char *prog, char **argv)| 函数。\\
-  完成后可以初步看见shell的现象。
-\end{exercise}
+%%shell本质上也是一个用户进程。它解释shell命令的工作是通过创建并运行子进程来完成的：对于每个shell命令，都有一个对应的可执行文件来完成该命令所要完成的工作，shell需要根据所得到的命令来创建执行相应可执行文件的子进程，从而完成命令的解释工作并得到结果。
 
-\begin{thinking}\label{think-spawn}
-  请解释\mintinline{c}|spawn|函数中注释标记为Share memory一段的作用，并说明为什么该段代码是正确的。你可以尝试对该段代码进行改动以探究其对运行结果的影响。
+%实现shell的一个关键函数是spawn，其作用是接受可执行文件路径和传给其的参数，创建一个新的进程使得可执行文件的相关段被映射到新进程的内存中（可执行文件的相关段位置需要借助readelf命令的帮助，该命令同交叉编译器位于同一目录下。可执行文件的后缀为 .b），并设置好栈，以及一些已初始化的数据，比如管道和重定向的文件描述符。其作用类似load\_icode和fork，但实现方式不一样。相信经过之前的训练，同学们应该可以较为容易的填出spawn函数。
+
+%\begin{exercise}
+%  根据上面的表述以及函数内的注释，补充完成 user/spawn.c 中的 \mintinline{c}|int spawn(char *prog, char **argv)| 函数。\\
+%  完成后可以初步看见shell的现象。
+%\end{exercise}
+
+%\begin{thinking}\label{think-spawn}
+%  请解释\mintinline{c}|spawn|函数中注释标记为Share memory一段的作用，并说明为什么该段代码是正确的。你可以尝试对该段代码进行改动以探究其对运行结果的影响。
+%\end{thinking}
+首先恭喜屏幕前的你能够读到这里，你的OS大厦即将落成，但所谓“行百里者半九十”，也许你此时会觉得整个系统的代码过多，OS的大厦摇摇欲坠，每一次DEBUG都因找不到问题出处而心力憔悴。当你满怀希望地make run，却发现屏幕上无限循环的page_out 或一行简洁的user_panic，是否让你欲哭无泪。要知道，坚持就是胜利(\sout{就像有的人挑战288次才击杀了苇名弦一郎})！我们能做的，就是尽可能地引导大家正确思考，并“正确地”实现接下来的部分——shell。
+
+Let's go!
+
+\subsection{spawn}
+
+spawn的\sout{谷歌}汉译为“产卵"，其作用是帮助我们调用文件系统中的可执行文件并执行。
+
+spawn的流程可以分解如下：
+
+\begin{itemize}
+    \item从文件系统打开对应的文件（2进制ELF，在我们的OS里是 *.b ）。（知道我们要组装威震天）
+    \item用fork创建子进程。（搭好小桌）
+	\item将ELF加载到子进程的地址空间中，并为它们分配物理页面；（零部件都摆好）
+	\item为子进程初始化堆、栈空间，并设置栈顶指针，以及重定向、管道的文件描述符。（贴好附赠贴纸）对于栈空间，因为我们的调用可能是有参数的，所以要将参数也安排进用户栈中。大家下个学期学习编译原理后，会对这一点有更加深刻的认识。
+	\item设置子进程的寄存器(栈寄存器sp设置为esp,程序入口地址pc设置为UTEXT)（组装）
+	\item这些都做完后，设置子进程可执行（放进手办展示柜）。
+\end{itemize}
+
+在动手填写spawn函数前，我们希望你：
+\begin{itemize}
+    \item认真回看lab5文件系统相关代码，弄清打开文件的过程。
+    \item思考如何读取elf文件或者说如何知道二进制文件中text段
+\end{itemize}
+
+关于后一个问题，各位已经在lab3中填写了load_icode函数，实现了elf中读取数据并写入内存空间。而text段的位置，可以借助 readelf 的帮助（这个命令各位应该不陌生，笔者在写这部分指导书时，慨叹各位lab1的exam确实有点难233)。
+
+为了确保各位的大楼经得起反复折腾，我们来探讨下面的问题，以检验大家的基本功，以及前几个lab是否做得“到位”，lab5 、lab3和lab1的 “二进宫”：
+
+（如果不到位，请回炉重看一遍并加以理解）
+
+\begin{itemize}
+    \item在lab1中我们介绍了data text bss 段及它们的含义，data存放初始化过的全局变量，bss存放未初始化的全局变量。关于memsize 和 filesize ，我们在Note1.3.3中也解释了它们的含义与特点。关于1.3.3，注意其中关于”bss并不在文件中占数据“的表述。
+    \item在lab3中我们创建进程，并且在内核态加载了初始进程（ENVCREATE(...) ),而我们的spawn函数则是通过和文件系统交互，取得文件描述块，进而找到elf在“硬盘”中的位置，进而读取。
+\end{itemize}
+
+在lab3中我们要填写load_icode_mapper函数，分为两部分填写，第二部分则是处理msize和fsize不相等时的情况。那么（简单的）问题来了：
+
+\begin{thinking}
+    bss在ELF中并不占空间，但ELF加载进内存后，bss段的数据占据了空间，并且初始值都是0。 请回答你设计的函数是如何实现上面这点的？
+\end{thinking}
+
+如果你回看了上面提到的指导书内容，答案应该是“显而易见的”。如果还不太理解，说明你需要回炉重看一遍，并实践一下下面的“补课资料”。
+
+接下来，我们将通过一个实例，再次吸收理解上面lab1、lab3 联动的内容。
+
+\label{code:testbss.c}
+\begin{minted}
+    #include "lib.h"
+    #define ARRAYSIZE (1024*1024)
+    int bigarray[ARRAYSIZE]={0};
+    void
+    umain(int argc, char **argv)
+    {
+    int i;
+    
+    writef("Making sure bss works right...\backslash n");
+        for(i = 0;i < ARRAYSIZE; i++)
+            if(bigarray[i]!=0)
+                user_panic("bigarray[\%d] isn't cleared!\backslash n",i);
+        for (i = 0; i < ARRAYSIZE; i++)
+            bigarray[i] = i;
+        for (i = 0; i < ARRAYSIZE; i++)
+            if (bigarray[i] != i)
+                userpanic("bigarray[\%d] didn't hold its value!\backslash n", i);
+            writef("Yes, good. Now doing a wild write off the end...\backslash n");
+            bigarray[ARRAYSIZE+1024] = 0;
+        userpanic("SHOULD HAVE TRAPPED!!!");
+    }
+\end{minted}
+
+在user/文件夹下创建上面的文件，并在Makefile中添加相应信息，使得生成相应的.b文件，在init/init.c中创建相应的初始进程，观察相应的实验现象。（具体可以参考lab4中 pingpong 和fktest 是如何添加到makefile中的）如果能正确运行，则说明我们的load_icode系列函数正确地保证了bss段的初始化。
+
+使用readelf命令解析我们的testbss.b文件，看看bss段的大小并分析其原因。学习并使用size命令，看看我们的testbss.b 文件的大小。
+
+修改代码，将数组初始化为 array[SIZE]={0}; 重新编译（记得常make clean），再次分析bss段。 再次使用size命令。
+
+再次修改代码，将数组初始化为array[SIZE]={1};再次重新编译，再次分析（三回啊三回）。
+
+在Lab5中我们实现了文件系统，lab6的shell部分我们提供了几个可执行二进制文件，模拟linux的命令：ls.b cat.b …… 。上面提到的spawn函数实现方法，是打开相应的文件并执行。请你思考我们是如何将文件“烧录”到fs.img中的（阅读fs/Makefile）。如果你并没有看懂我这段话，请回看Exercise5.4
+
+下面请你将我们生成的 testbss.b加载进fs.img中
+
+这节“补课”下课以后，大家再去补全spawn函数，相信能如鱼得水了。
+
+\begin{thinking}
+ 为什么我们的*.b 的text段偏移值都是一样的，为固定值？（答案显而易见，让各位回答这个问题是为了强化lab1的学习）
 \end{thinking}
 
 接下来，我们需要在shell进程里实现对管道和重定向的解释功能。解释shell命令时：
