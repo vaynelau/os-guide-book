@@ -148,7 +148,7 @@ pageref(rfd) + pageref(wfd) = pageref(pipe)\label{variant}
 内核会对pages数组成员维护一个页引用变量 pp\_ref 来记录指向该物理页的虚页数量。pageref的实现实际上就是查询虚页 P 对应的实际物理页，然后返回其 pp\_ref 变量的值。
 \end{note}
 
-这个等式对我们而言有什么用呢？假设我们现在在运行读者进程，而进行管道写入的进程都已经结束了，那么此时就应该有：\mintinline{c}|pageref(wfd) = 0|。所以就有\mintinline{c}|pageref(rfd) = pageref(pipe)|。所以我们只要判断这个等式是否成绩就可以得知写端是否关闭，对写者来说同理。
+这个等式对我们而言有什么用呢？假设我们现在在运行读者进程，而进行管道写入的进程都已经结束了，那么此时就应该有：\mintinline{c}|pageref(wfd) = 0|。所以就有\mintinline{c}|pageref(rfd) = pageref(pipe)|。所以我们只要判断这个等式是否成立就可以得知写端是否关闭，对写者来说同理。
 
 \begin{exercise}
 	根据上述提示与代码中的注释，填写 user/pipe.c 中的 piperead、pipewrite、\_pipeisclosed 函数并通过 testpipe 的测试。
